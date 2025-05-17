@@ -1,72 +1,120 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Clon Digital - AlmostMe</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AlmostMe - Clon Interactivo</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 1em; }
-    video { width: 100%; border-radius: 10px; margin-bottom: 1em; }
-    #respuesta { margin-top: 1em; background: #f0f0f0; padding: 1em; border-radius: 8px; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    #avatar-container {
+      margin: 30px auto;
+      max-width: 720px;
+      height: auto;
+    }
+
+    .chat-input {
+      margin-top: 30px;
+    }
+
+    input[type="text"] {
+      width: 80%;
+      padding: 10px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      margin-left: 10px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
   </style>
 </head>
 <body>
-  <h1>AlmostMe: Tu clon digital</h1>
-  <video id="avatarVideo" autoplay loop muted poster="loading.jpg"></video>
+  <h1>Bienvenido a tu clon AlmostMe</h1>
 
-  <form id="formulario">
-    <input type="text" id="mensaje" placeholder="Escribí tu mensaje" required style="width: 80%; padding: 0.5em;">
-    <button type="submit">Enviar</button>
-  </form>
+  <!-- Contenedor del avatar parlante -->
+  <div id="avatar-container"></div>
 
-  <div id="respuesta"></div>
+  <!-- Campo para probar el clon también desde HTML -->
+  <div class="chat-input">
+    <input type="text" id="mensaje" placeholder="Escribí algo para tu clon..." />
+    <button onclick="enviarMensaje()">Enviar</button>
+  </div>
 
+  <!-- Script del agente de D-ID con tu configuración -->
+  <script
+    type="module"
+    src="https://agent.d-id.com/v1/index.js"
+    data-name="did-agent"
+    data-mode="fabio"
+    data-client-key="Z29vZ2xlLW9hdXRoMnwxMDMzOTczMTI3MzI5NjkwMzI4Mjg6VElDajc1V0tZRGZXNzlLekxDOXAz"
+    data-agent-id="agt_-6gnHmcW"
+    data-monitor="true">
+  </script>
+
+  <!-- Lógica de integración con tu backend personalizado -->
   <script>
-    const videoElement = document.getElementById("avatarVideo");
+    // Escuchar mensajes del agente
+    window.addEventListener("message", async (event) => {
+      if (event.data?.type === "agent-text") {
+        const mensaje = event.data.message;
+        const respuesta = await consultarBackend(mensaje);
+        hablarConAvatar(respuesta);
+      }
+    });
 
-    document.getElementById("formulario").addEventListener("submit", async function (e) {
-      e.preventDefault();
-      const mensaje = document.getElementById("mensaje").value;
-      const respuestaDiv = document.getElementById("respuesta");
-      respuestaDiv.innerHTML = "⏳ Pensando...";
-
-      // Obtener respuesta del clon (tu backend)
-      const respuesta = await fetch("/clon", {
+    // Consultar a tu backend Flask
+    async function consultarBackend(mensaje) {
+      const res = await fetch("/clon", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mensaje })
       });
+      const data = await res.json();
+      return data.respuesta;
+    }
 
-      const data = await respuesta.json();
-      const texto = data.respuesta;
-      respuestaDiv.innerHTML = `<strong>Clon:</strong> ${texto}`;
+    // Enviar respuesta al avatar de D-ID para que hable
+    function hablarConAvatar(texto) {
+      const iframe = document.querySelector("iframe[src*='agent.d-id.com']");
+      if (iframe) {
+        iframe.contentWindow.postMessage({
+          type: "agent-action",
+          action: "speak",
+          text: texto
+        }, "*");
+      }
+    }
 
-      // Enviar a D-ID para generar nuevo video hablando
-      const didResponse = await fetch("https://api.d-id.com/talks", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Y2VjYXJyaXpvZ0BnbWFpbC5jb20:WeD5_aVq0SBv-sHciQa8B"
-        },
-        body: JSON.stringify({
-          script: {
-            type: "text",
-            ssml: false,
-            provider: { type: "microsoft", voice_id: "es-AR-TomasNeural" },
-            input: texto
-          },
-          config: { fluent: true },
-          source_url: "https://create.d-id.com/characters/96718701a9a9fcbd73a59583748a09f3"
-        })
-      });
-
-      const didData = await didResponse.json();
-      const videoUrl = `https://studio.d-id.com/share/${didData.id}`;
-
-      // Reemplazar el video con el nuevo generado
-      videoElement.src = videoUrl;
-      videoElement.load();
-      videoElement.play();
-    });
+    // Para probar manualmente desde la UI
+    async function enviarMensaje() {
+      const input = document.getElementById("mensaje");
+      const mensaje = input.value;
+      const respuesta = await consultarBackend(mensaje);
+      hablarConAvatar(respuesta);
+    }
   </script>
 </body>
 </html>
