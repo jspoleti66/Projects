@@ -1,36 +1,72 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AlmostMe - Tu clon digital</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>Clon Digital - AlmostMe</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 1em; }
+    video { width: 100%; border-radius: 10px; margin-bottom: 1em; }
+    #respuesta { margin-top: 1em; background: #f0f0f0; padding: 1em; border-radius: 8px; }
+  </style>
 </head>
-<body class="bg-gray-900 text-white flex flex-col items-center min-h-screen py-10 px-4">
-  <h1 class="text-4xl font-bold mb-6 animate-fade-in">👤 AlmostMe - Clon Digital</h1>
+<body>
+  <h1>AlmostMe: Tu clon digital</h1>
+  <video id="avatarVideo" autoplay loop muted poster="loading.jpg"></video>
 
-  <!-- Avatar animado de D-ID (usar iframe) -->
-  <div class="w-full max-w-md mb-6 aspect-video">
-    <iframe
-      id="did-avatar"
-      src="https://studio.d-id.com/share?id=96718701a9a9fcbd73a59583748a09f3&utm_source=copy"  <!-- ← Reemplazá con el tuyo -->
-      frameborder="0"
-      allow="autoplay; fullscreen"
-      class="w-full h-full rounded-2xl shadow-lg">
-    </iframe>
-  </div>
+  <form id="formulario">
+    <input type="text" id="mensaje" placeholder="Escribí tu mensaje" required style="width: 80%; padding: 0.5em;">
+    <button type="submit">Enviar</button>
+  </form>
 
-  <!-- Área de chat -->
-  <div class="w-full max-w-md bg-gray-800 rounded-xl p-6 shadow-md">
-    <div id="chat-box" class="h-64 overflow-y-auto mb-4 space-y-2 text-sm"></div>
+  <div id="respuesta"></div>
 
-    <form id="chat-form" class="flex">
-      <input id="user-input" type="text" placeholder="Escribí algo..." class="flex-grow px-4 py-2 rounded-l bg-gray-700 text-white focus:outline-none" autocomplete="off" />
-      <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-r">Enviar</button>
-    </form>
-  </div>
+  <script>
+    const videoElement = document.getElementById("avatarVideo");
 
-  <!-- Scripts -->
-  <script src="/static/scripts.js"></script>
+    document.getElementById("formulario").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const mensaje = document.getElementById("mensaje").value;
+      const respuestaDiv = document.getElementById("respuesta");
+      respuestaDiv.innerHTML = "⏳ Pensando...";
+
+      // Obtener respuesta del clon (tu backend)
+      const respuesta = await fetch("/clon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mensaje })
+      });
+
+      const data = await respuesta.json();
+      const texto = data.respuesta;
+      respuestaDiv.innerHTML = `<strong>Clon:</strong> ${texto}`;
+
+      // Enviar a D-ID para generar nuevo video hablando
+      const didResponse = await fetch("https://api.d-id.com/talks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Y2VjYXJyaXpvZ0BnbWFpbC5jb20:WeD5_aVq0SBv-sHciQa8B"
+        },
+        body: JSON.stringify({
+          script: {
+            type: "text",
+            ssml: false,
+            provider: { type: "microsoft", voice_id: "es-AR-TomasNeural" },
+            input: texto
+          },
+          config: { fluent: true },
+          source_url: "URL_DE_TU_IMAGEN_SUBIDA"
+        })
+      });
+
+      const didData = await didResponse.json();
+      const videoUrl = `https://studio.d-id.com/share/${didData.id}`;
+
+      // Reemplazar el video con el nuevo generado
+      videoElement.src = videoUrl;
+      videoElement.load();
+      videoElement.play();
+    });
+  </script>
 </body>
 </html>
