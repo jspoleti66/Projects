@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>AlmostMe Clon</title>
+  <style>
+    body { font-family: sans-serif; padding: 2em; background: #f5f5f5; }
+    #chat { max-width: 600px; margin: auto; }
+    .mensaje { margin: 1em 0; }
+    .usuario { font-weight: bold; color: #007bff; }
+    .clon { color: #333; margin-left: 1em; }
+  </style>
+</head>
+<body>
+  <div id="chat">
+    <h2>🧠 AlmostMe Clon</h2>
+    <div id="mensajes"></div>
+    <form id="formulario">
+      <input type="text" id="entrada" placeholder="Escribí tu pregunta..." style="width: 80%;" required />
+      <button type="submit">Enviar</button>
+    </form>
+  </div>
+  <script>
+    const form = document.getElementById("formulario");
+    const entrada = document.getElementById("entrada");
+    const mensajes = document.getElementById("mensajes");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const mensajeUsuario = entrada.value;
+      mensajes.innerHTML += `<div class="mensaje"><span class="usuario">Vos:</span> ${mensajeUsuario}</div>`;
+      entrada.value = "";
+
+      const respuesta = await fetch("/clon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mensaje: mensajeUsuario })
+      });
+
+      const data = await respuesta.json();
+      mensajes.innerHTML += `<div class="mensaje"><span class="clon">Clon:</span> ${data.respuesta}</div>`;
+    });
+  </script>
+</body>
+</html>

@@ -1,14 +1,6 @@
 import os
 import requests
-from flask import Flask, request, jsonify
-
-from flask import render_template
-
-app = Flask(__name__)
-
-@app.route("/", methods=["GET"])
-def home():
-    return render_template("index.html")
+from flask import Flask, request, jsonify, render_template
 
 app = Flask(__name__)
 
@@ -64,7 +56,7 @@ def consultar_openrouter(mensajes):
 
 @app.route("/", methods=["GET"])
 def home():
-    return "🟢 AlmostMe clon está online!"
+    return render_template("index.html")
 
 @app.route("/clon", methods=["POST"])
 def responder():
