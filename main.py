@@ -1,27 +1,17 @@
 import os
 import requests
-
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
 
-@app.route("/")
+# Ruta principal
+@app.route("/", methods=["GET"])
 def home():
     return render_template("index.html")
 
-@app.route("/chat", methods=["POST"])
-def chat():
-    user_input = request.json["message"]
-    # Acá iría la lógica con OpenAI, Chatbase, etc.
-    response = f"Respuesta simulada para: {user_input}"
-    return jsonify({"response": response})
-
-if __name__ == "__main__":
-    app.run(debug=True)
-
-# Cargar contexto como en tu clon
+# Cargar contexto
 def cargar_contexto():
     BASE_PATH = "data"
     ARCHIVOS = {
@@ -71,10 +61,6 @@ def consultar_openrouter(mensajes):
         return f"⚠️ Error: {response.text}"
     return response.json()["choices"][0]["message"]["content"]
 
-@app.route("/", methods=["GET"])
-def home():
-    return render_template("index.html")
-
 @app.route("/clon", methods=["POST"])
 def responder():
     datos = request.json
@@ -82,7 +68,3 @@ def responder():
     mensajes = construir_mensaje_usuario(entrada, contexto)
     respuesta = consultar_openrouter(mensajes)
     return jsonify({"respuesta": respuesta})
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
