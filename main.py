@@ -2,6 +2,12 @@ import os
 import requests
 from flask import Flask, request, jsonify
 
+from flask import render_template
+
+@app.route("/", methods=["GET"])
+def home():
+    return render_template("index.html")
+
 app = Flask(__name__)
 
 # Cargar contexto como en tu clon
