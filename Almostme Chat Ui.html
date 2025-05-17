@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AlmostMe - Clon Interactivo</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f3f4f6;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    #chat {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .mensaje {
+      margin-bottom: 10px;
+    }
+    .usuario {
+      font-weight: bold;
+      color: #1f2937;
+    }
+    .bot {
+      color: #374151;
+    }
+    form {
+      display: flex;
+      padding: 10px;
+      background: white;
+      border-top: 1px solid #ccc;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px 15px;
+      font-size: 1rem;
+      margin-left: 10px;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="chat"></div>
+  <form id="form">
+    <input type="text" id="input" placeholder="Escribe tu mensaje..." required />
+    <button type="submit">Enviar</button>
+  </form>
+
+  <script>
+    const form = document.getElementById("form");
+    const input = document.getElementById("input");
+    const chat = document.getElementById("chat");
+
+    function agregarMensaje(texto, clase) {
+      const div = document.createElement("div");
+      div.className = `mensaje ${clase}`;
+      div.textContent = texto;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const mensaje = input.value.trim();
+      if (!mensaje) return;
+      agregarMensaje("👤 " + mensaje, "usuario");
+      input.value = "";
+      try {
+        const resp = await fetch("/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ mensaje })
+        });
+        const data = await resp.json();
+        agregarMensaje("🤖 " + data.respuesta, "bot");
+      } catch (err) {
+        agregarMensaje("🤖 Error al conectar con el clon.", "bot");
+      }
+    });
+  </script>
+</body>
+</html>
