@@ -1,6 +1,8 @@
 flask
+flask-cors
 requests
 numpy
 soundfile
 TTS
+gunicorn
 
