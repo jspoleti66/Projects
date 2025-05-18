@@ -1,75 +1,22 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Clon Interactivo</title>
-</head>
-<body>
-  <h2>Clon Interactivo AlmostMe</h2>
+<div id="respuesta-clon" style="margin-top: 20px; font-weight: bold;"></div>
+<video id="video-clon" style="margin-top: 20px; display:none;" controls autoplay></video>
 
-  <script
-    type="module"
-    src="https://agent.d-id.com/v1/index.js"
-    data-name="did-agent"
-    data-mode="fabio"
-    data-client-key="Z29vZ2xlLW9hdXRoMnwxMDMzOTczMTI3MzI5NjkwMzI4Mjg6VElDajc1V0tZRGZXNzlLekxDOXAz"
-    data-agent-id="agt_-6gnHmcW"
-    data-monitor="true"
-  ></script>
-
-  <div style="margin-top: 20px;">
-    <input type="text" id="input-clon" placeholder="Escribí algo..." />
-    <button onclick="enviarAlClon()">Enviar</button>
-    <div id="respuesta-clon" style="margin-top: 20px; font-weight: bold;"></div>
-  </div>
-
-  <script>
-    // Escuchar mensajes del iframe
-    window.addEventListener("message", async (event) => {
-      if (event.data?.type === "agent-text") {
-        const mensaje = event.data.message;
-
-        try {
-          const res = await fetch("/clon", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ mensaje })
-          });
-          const data = await res.json();
-
-          document.getElementById("respuesta-clon").innerText = data.respuesta || "Sin respuesta";
-          hablarConAvatar(data.respuesta);
-        } catch (err) {
-          console.error("Error al comunicarse con el backend:", err);
-        }
-      }
+<script>
+  async function enviarAlClon() {
+    const mensaje = document.getElementById("input-clon").value;
+    const res = await fetch("/clon", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mensaje })
     });
+    const data = await res.json();
 
-    // Enviar mensaje manualmente desde el input
-    async function enviarAlClon() {
-      const mensaje = document.getElementById("input-clon").value;
-      const res = await fetch("/clon", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mensaje })
-      });
-      const data = await res.json();
-      document.getElementById("respuesta-clon").innerText = data.respuesta;
-      hablarConAvatar(data.respuesta);
-    }
+    document.getElementById("respuesta-clon").innerText = data.respuesta || "Sin respuesta";
 
-    // Enviar mensaje al avatar de D-ID
-    function hablarConAvatar(texto) {
-      const iframe = document.querySelector("iframe[src*='agent.d-id.com']");
-      if (iframe) {
-        iframe.contentWindow.postMessage({
-          type: "agent-action",
-          action: "speak",
-          text: texto
-        }, "*");
-      }
+    if (data.video_url) {
+      const video = document.getElementById("video-clon");
+      video.src = data.video_url;
+      video.style.display = "block";
     }
-  </script>
-</body>
-</html>
+  }
+</script>

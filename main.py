@@ -1,10 +1,14 @@
 import os
 import requests
+import time
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
+
+DID_API_KEY = "Z29vZ2xlLW9hdXRoMnwxMDMzOTczMTI3MzI5NjkwMzI4Mjg6VElDajc1V0tZRGZXNzlLekxDOXAz"
+DID_URL = "https://api.d-id.com/talks"
 
 # Ruta principal
 @app.route("/", methods=["GET"])
@@ -61,10 +65,23 @@ def consultar_openrouter(mensajes):
         return f"⚠️ Error: {response.text}"
     return response.json()["choices"][0]["message"]["content"]
 
-@app.route("/clon", methods=["POST"])
-def responder():
-    datos = request.json
-    entrada = datos.get("mensaje", "")
-    mensajes = construir_mensaje_usuario(entrada, contexto)
-    respuesta = consultar_openrouter(mensajes)
-    return jsonify({"respuesta": respuesta})
+def generar_video_did(texto, avatar_url=None):
+    headers = {
+        "Authorization": f"Basic {DID_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "script": {
+            "type": "text",
+            "input": texto,
+            "provider": {
+                "type": "microsoft",
+                "voice_id": "es-ES-AlvaroNeural"  # voz en español natural
+            }
+        },
+        "source_url": avatar_url or "https://create-images-results.d-id.com/DefaultPresentationFace_v2.png"
+    }
+
+    response = requests.post(DID_URL, headers=headers, json=payload)
+    if res
