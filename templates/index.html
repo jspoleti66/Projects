@@ -1,90 +1,29 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>AlmostMe - Clon parlante</title>
-    <style>
-      #chat-box { margin-top: 20px; }
-      #agent-wrapper { height: 400px; }
-    </style>
-  </head>
-  <body>
-    <div id="agent-wrapper">
-      <script
-        type="module"
-        src="https://agent.d-id.com/v1/index.js"
-        data-name="did-agent"
-        data-mode="fabio"
-        data-client-key="Z29vZ2xlLW9hdXRoMnwxMDMzOTczMTI3MzI5NjkwMzI4Mjg6VElDajc1V0tZRGZXNzlLekxDOXAz"
-        data-agent-id="agt_-6gnHmcW"
-        data-monitor="true"
-      ></script>
-    </div>
-
-    <div id="chat-box">
-      <form id="chat-form">
-        <input type="text" id="user-input" placeholder="Decile algo al clon..." required />
-        <button type="submit">Enviar</button>
-      </form>
-      <p><strong>Respuesta del clon:</strong> <span id="response-text"></span></p>
-    </div>
+<head><title>Clon D-ID</title></head>
+<body>
+    <h2>Habla con el clon</h2>
+    <input type="text" id="userInput" placeholder="Escribe algo...">
+    <button onclick="enviarTexto()">Enviar</button>
+    <div id="videoContainer"></div>
 
     <script>
-      let agentIframe = null;
+        async function enviarTexto() {
+            const texto = document.getElementById("userInput").value;
+            const res = await fetch("/talk", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: texto })
+            });
 
-      // Detecta el iframe del agente cuando está cargado
-      window.addEventListener("message", (event) => {
-        if (event.data?.source === "did-agent" && event.data?.type === "agent-ready") {
-          agentIframe = document.querySelector('iframe[data-name="did-agent"]');
-          console.log("✅ Agente D-ID listo");
+            const data = await res.json();
+            if (data.video_url) {
+                document.getElementById("videoContainer").innerHTML =
+                    `<video src="${data.video_url}" autoplay controls></video>`;
+            } else {
+                alert("Error generando video.");
+            }
         }
-      });
-
-      // Manejador de formulario
-      document.getElementById("chat-form").addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        const input = document.getElementById("user-input");
-        const userText = input.value.trim();
-        input.value = "";
-
-        if (!userText) return;
-        if (!agentIframe?.contentWindow) {
-          console.error("⚠️ El agente aún no está listo");
-          return;
-        }
-
-        // Mostrar "Pensando..."
-        document.getElementById("response-text").innerText = "Pensando...";
-
-        // Obtener respuesta del clon (tu backend Flask)
-        try {
-          const res = await fetch("/clon", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt: userText }),
-          });
-          const data = await res.json();
-          const reply = data.response;
-
-          // Mostrar en pantalla
-          document.getElementById("response-text").innerText = reply;
-
-          // Hacer hablar al agente
-          agentIframe.contentWindow.postMessage(
-            {
-              type: "speak",
-              payload: {
-                text: reply,
-              },
-            },
-            "*"
-          );
-        } catch (error) {
-          console.error("❌ Error al obtener respuesta del clon:", error);
-          document.getElementById("response-text").innerText = "Error al conectar con el clon.";
-        }
-      });
     </script>
-  </body>
+</body>
 </html>
