@@ -110,9 +110,5 @@ def responder():
     mensajes = construir_mensaje_usuario(entrada, contexto)
     respuesta = consultar_openrouter(mensajes)
 
-    video_url, error = generar_video_did(respuesta)
+    return jsonify({"respuesta": respuesta})
 
-    if error:
-        return jsonify({"error": error, "respuesta": respuesta})
-
-    return jsonify({"respuesta": respuesta, "video_url": video_url})

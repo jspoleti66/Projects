@@ -1,108 +1,51 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-  <meta charset="UTF-8">
   <title>AlmostMe - Clon Parlante</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 2rem;
-      background-color: #f4f4f4;
-      color: #333;
-      max-width: 800px;
-      margin: auto;
-    }
-    h1 {
-      color: #4a90e2;
-      text-align: center;
-    }
-    label, textarea, button {
-      display: block;
-      width: 100%;
-      margin-top: 1rem;
-    }
-    textarea {
-      height: 100px;
-      padding: 1rem;
-      font-size: 1rem;
-    }
-    button {
-      padding: 1rem;
-      background-color: #4a90e2;
-      color: white;
-      border: none;
-      cursor: pointer;
-      font-size: 1rem;
-      margin-top: 1rem;
-    }
-    .response {
-      margin-top: 2rem;
-      padding: 1rem;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    video {
-      width: 100%;
-      border-radius: 8px;
-      margin-top: 1rem;
-    }
-    .loader {
-      margin-top: 1rem;
-      color: #888;
-    }
-  </style>
+  <script src="https://unpkg.com/@d-id/talkie-player"></script>
 </head>
 <body>
-  <h1>👤 Clon Parlante - AlmostMe</h1>
+  <h2>Tu clon digital AlmostMe</h2>
+  <talkie-player
+    id="clon"
+    src="https://create-images-results.d-id.com/your-avatar-image.png" 
+    style="width: 400px; height: 400px;"
+  ></talkie-player>
 
-  <label for="mensaje">💬 Escribí tu mensaje:</label>
-  <textarea id="mensaje" placeholder="Preguntale algo a tu clon..."></textarea>
-  <button onclick="enviarMensaje()">Enviar</button>
-
-  <div id="respuesta-container" class="response" style="display:none;">
-    <p><strong>📨 Tu mensaje:</strong> <span id="mensaje-original"></span></p>
-    <p><strong>🤖 Respuesta del clon:</strong></p>
-    <p id="respuesta-clon" style="white-space: pre-line;"></p>
-    <div id="video-container"></div>
-  </div>
-
-  <p class="loader" id="loader" style="display:none;">⏳ Procesando... Por favor esperá...</p>
+  <br /><br />
+  <input type="text" id="mensaje" placeholder="Escribí algo..." style="width: 300px;" />
+  <button onclick="enviar()">Hablar</button>
 
   <script>
-    async function enviarMensaje() {
-      const mensaje = document.getElementById("mensaje").value.trim();
-      if (!mensaje) return;
+    const player = document.getElementById("clon");
 
-      document.getElementById("loader").style.display = "block";
-      document.getElementById("respuesta-container").style.display = "none";
-      document.getElementById("respuesta-clon").textContent = "";
-      document.getElementById("video-container").innerHTML = "";
+    async function enviar() {
+      const texto = document.getElementById("mensaje").value;
 
-      const response = await fetch("/clon", {
+      const respuesta = await fetch("/clon", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mensaje })
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ mensaje: texto })
       });
 
-      const data = await response.json();
-      document.getElementById("loader").style.display = "none";
-
+      const data = await respuesta.json();
       if (data.error) {
-        alert("⚠️ Error: " + data.error);
+        alert("Error: " + data.error);
         return;
       }
 
-      document.getElementById("mensaje-original").textContent = mensaje;
-      document.getElementById("respuesta-clon").textContent = data.respuesta;
-      document.getElementById("video-container").innerHTML = `
-        <video controls autoplay>
-          <source src="${data.video_url}" type="video/mp4">
-          Tu navegador no soporta video HTML5.
-        </video>
-      `;
-      document.getElementById("respuesta-container").style.display = "block";
+      player.play({
+        script: {
+          type: "text",
+          input: data.respuesta,
+          provider: { type: "microsoft", voice_id: "es-ES-AlvaroNeural" }
+        },
+        config: {
+          apiKey: "Y2VjYXJyaXpvZ0BnbWFpbC5jb20:KRphQ-Ulqibq5EpN8xj3f" // ⚠️ solo para pruebas locales
+        }
+      });
     }
   </script>
 </body>
