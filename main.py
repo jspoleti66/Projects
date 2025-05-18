@@ -50,7 +50,7 @@ def construir_mensaje_usuario(input_usuario, contexto):
 def consultar_openrouter(mensajes):
     api_key = "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"
     headers = {
-        "Authorization": "Bearer {api_key}",
+        "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://almostme-demo",
         "X-Title": "almostme-clon"
@@ -70,7 +70,7 @@ DID_API_KEY = os.getenv("DID_API_KEY")
 
 def generar_video_did(texto, avatar_url=None):
     headers = {
-    "Authorization": "Bearer {DID_API_KEY}",
+    "Authorization": f"Bearer {DID_API_KEY}",
     "Content-Type": "application/json"
 }
 
