@@ -75,13 +75,6 @@ def generar_video_did(texto, avatar_url=None):
     "Content-Type": "application/json"
 }
 
-
-def generar_video_did(texto, avatar_url=None):
-    headers = {
-    "Authorization": f"Bearer {"Y2VjYXJyaXpvZ0BnbWFpbC5jb20:KRphQ-Ulqibq5EpN8xj3f}",
-    "Content-Type": "application/json"
-    }
-
     payload = {
         "script": {
             "type": "text",
