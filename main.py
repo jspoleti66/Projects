@@ -84,4 +84,32 @@ def generar_video_did(texto, avatar_url=None):
     }
 
     response = requests.post(DID_URL, headers=headers, json=payload)
-    if res
+    if response.status_code != 200:
+        return None, f"Error creando video: {response.text}"
+
+    video_id = response.json()["id"]
+
+    # Esperar a que esté listo
+    for _ in range(10):
+        time.sleep(2)
+        status_response = requests.get(f"{DID_URL}/{video_id}", headers=headers)
+        if status_response.status_code == 200:
+            result = status_response.json()
+            if result.get("result_url"):
+                return result["result_url"], None
+
+    return None, "⏱ Timeout esperando video"
+
+@app.route("/clon", methods=["POST"])
+def responder():
+    datos = request.json
+    entrada = datos.get("mensaje", "")
+    mensajes = construir_mensaje_usuario(entrada, contexto)
+    respuesta = consultar_openrouter(mensajes)
+
+    video_url, error = generar_video_did(respuesta)
+
+    if error:
+        return jsonify({"error": error, "respuesta": respuesta})
+
+    return jsonify({"respuesta": respuesta, "video_url": video_url})
