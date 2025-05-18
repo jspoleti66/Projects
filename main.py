@@ -65,6 +65,17 @@ def consultar_openrouter(mensajes):
         return f"⚠️ Error: {response.text}"
     return response.json()["choices"][0]["message"]["content"]
 
+import os
+
+DID_API_KEY = os.getenv("DID_API_KEY")
+
+def generar_video_did(texto, avatar_url=None):
+    headers = {
+    "Authorization": f"Bearer {DID_API_KEY}",
+    "Content-Type": "application/json"
+}
+
+
 def generar_video_did(texto, avatar_url=None):
     headers = {
     "Authorization": f"Bearer {"Y2VjYXJyaXpvZ0BnbWFpbC5jb20:KRphQ-Ulqibq5EpN8xj3f}",
