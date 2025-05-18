@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: almostme-clon
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python app.py"
+    envVars:
+      - key: OPENROUTER_API_KEY
+        fromTemplate: openrouter_api_key
+    autoDeploy: true
+

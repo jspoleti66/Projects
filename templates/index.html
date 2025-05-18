@@ -1,52 +1,81 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>AlmostMe - Clon Parlante</title>
-  <script src="https://unpkg.com/@d-id/talkie-player"></script>
+<meta charset="UTF-8" />
+<title>Clon Parlante AlmostMe</title>
+<style>
+  #avatar {
+    width: 200px;
+  }
+  #mouthCanvas {
+    border: 1px solid #ccc;
+    width: 200px;
+    height: 50px;
+    margin-top: 5px;
+  }
+</style>
 </head>
 <body>
-  <h2>Tu clon digital AlmostMe</h2>
-  <talkie-player
-    id="clon"
-    src="https://create-images-results.d-id.com/your-avatar-image.png" 
-    style="width: 400px; height: 400px;"
-  ></talkie-player>
+<h1>Clon Parlante - AlmostMe</h1>
+<input type="text" id="mensaje" placeholder="Escribí algo..." size="50" />
+<button onclick="enviar()">Enviar</button>
 
-  <br /><br />
-  <input type="text" id="mensaje" placeholder="Escribí algo..." style="width: 300px;" />
-  <button onclick="enviar()">Hablar</button>
+<div>
+  <img id="avatar" src="https://i.imgur.com/3zX9iCt.png" alt="Avatar" />
+  <canvas id="mouthCanvas" width="200" height="50"></canvas>
+</div>
 
-  <script>
-    const player = document.getElementById("clon");
+<audio id="audio" controls></audio>
 
-    async function enviar() {
-      const texto = document.getElementById("mensaje").value;
+<script>
+  async function enviar() {
+    const mensaje = document.getElementById("mensaje").value;
+    if (!mensaje) return alert("Escribí algo para enviar");
 
-      const respuesta = await fetch("/clon", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ mensaje: texto })
-      });
+    const resp = await fetch("/clon", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mensaje })
+    });
+    const data = await resp.json();
 
-      const data = await respuesta.json();
-      if (data.error) {
-        alert("Error: " + data.error);
-        return;
-      }
-
-      player.play({
-        script: {
-          type: "text",
-          input: data.respuesta,
-          provider: { type: "microsoft", voice_id: "es-ES-AlvaroNeural" }
-        },
-        config: {
-          apiKey: "Y2VjYXJyaXpvZ0BnbWFpbC5jb20:KRphQ-Ulqibq5EpN8xj3f" // ⚠️ solo para pruebas locales
-        }
-      });
+    if(data.error){
+      alert("Error: " + data.error);
+      return;
     }
-  </script>
+
+    document.getElementById("audio").src = data.audio_url;
+    document.getElementById("audio").play();
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const audioElement = document.getElementById("audio");
+    const canvas = document.getElementById("mouthCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const source = audioCtx.createMediaElementSource(audioElement);
+    const analyser = audioCtx.createAnalyser();
+    source.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    analyser.fftSize = 256;
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+    function animate() {
+      analyser.getByteFrequencyData(dataArray);
+      const volume = dataArray.reduce((a,b) => a + b) / dataArray.length;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#ff4b5c";
+      ctx.fillRect(50, 10, 100, volume / 5);
+
+      if (!audioElement.paused && !audioElement.ended) {
+        requestAnimationFrame(animate);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    animate();
+  }
+</script>
 </body>
 </html>
