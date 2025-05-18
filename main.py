@@ -67,8 +67,8 @@ def consultar_openrouter(mensajes):
 
 def generar_video_did(texto, avatar_url=None):
     headers = {
-        "Authorization": f"Basic {DID_API_KEY}",
-        "Content-Type": "application/json"
+    "Authorization": f"Bearer {"Y2VjYXJyaXpvZ0BnbWFpbC5jb20:KRphQ-Ulqibq5EpN8xj3f}",
+    "Content-Type": "application/json"
     }
 
     payload = {
