@@ -3,67 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AlmostMe - Clon Interactivo</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f2f2f2;
-      margin: 0;
-      padding: 20px;
-      text-align: center;
-    }
-
-    h1 {
-      color: #333;
-    }
-
-    #avatar-container {
-      margin: 30px auto;
-      max-width: 720px;
-      height: auto;
-    }
-
-    .chat-input {
-      margin-top: 30px;
-    }
-
-    input[type="text"] {
-      width: 80%;
-      padding: 10px;
-      font-size: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-
-    button {
-      padding: 10px 20px;
-      font-size: 1rem;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      margin-left: 10px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #0056b3;
-    }
-  </style>
+  <title>Clon Interactivo</title>
 </head>
 <body>
-  <h1>Bienvenido a tu clon AlmostMe</h1>
+  <h2>Clon Interactivo AlmostMe</h2>
 
-  <!-- Contenedor del avatar parlante -->
-  <div id="avatar-container"></div>
-
-  <!-- Campo para probar el clon también desde HTML -->
-  <div class="chat-input">
-    <input type="text" id="mensaje" placeholder="Escribí algo para tu clon..." />
-    <button onclick="enviarMensaje()">Enviar</button>
-  </div>
-
-  <!-- Script del agente de D-ID con tu configuración -->
   <script
     type="module"
     src="https://agent.d-id.com/v1/index.js"
@@ -71,32 +15,51 @@
     data-mode="fabio"
     data-client-key="Z29vZ2xlLW9hdXRoMnwxMDMzOTczMTI3MzI5NjkwMzI4Mjg6VElDajc1V0tZRGZXNzlLekxDOXAz"
     data-agent-id="agt_-6gnHmcW"
-    data-monitor="true">
-  </script>
+    data-monitor="true"
+  ></script>
 
-  <!-- Lógica de integración con tu backend personalizado -->
+  <div style="margin-top: 20px;">
+    <input type="text" id="input-clon" placeholder="Escribí algo..." />
+    <button onclick="enviarAlClon()">Enviar</button>
+    <div id="respuesta-clon" style="margin-top: 20px; font-weight: bold;"></div>
+  </div>
+
   <script>
-    // Escuchar mensajes del agente
+    // Escuchar mensajes del iframe
     window.addEventListener("message", async (event) => {
       if (event.data?.type === "agent-text") {
         const mensaje = event.data.message;
-        const respuesta = await consultarBackend(mensaje);
-        hablarConAvatar(respuesta);
+
+        try {
+          const res = await fetch("/clon", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ mensaje })
+          });
+          const data = await res.json();
+
+          document.getElementById("respuesta-clon").innerText = data.respuesta || "Sin respuesta";
+          hablarConAvatar(data.respuesta);
+        } catch (err) {
+          console.error("Error al comunicarse con el backend:", err);
+        }
       }
     });
 
-    // Consultar a tu backend Flask
-    async function consultarBackend(mensaje) {
+    // Enviar mensaje manualmente desde el input
+    async function enviarAlClon() {
+      const mensaje = document.getElementById("input-clon").value;
       const res = await fetch("/clon", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mensaje })
       });
       const data = await res.json();
-      return data.respuesta;
+      document.getElementById("respuesta-clon").innerText = data.respuesta;
+      hablarConAvatar(data.respuesta);
     }
 
-    // Enviar respuesta al avatar de D-ID para que hable
+    // Enviar mensaje al avatar de D-ID
     function hablarConAvatar(texto) {
       const iframe = document.querySelector("iframe[src*='agent.d-id.com']");
       if (iframe) {
@@ -106,14 +69,6 @@
           text: texto
         }, "*");
       }
-    }
-
-    // Para probar manualmente desde la UI
-    async function enviarMensaje() {
-      const input = document.getElementById("mensaje");
-      const mensaje = input.value;
-      const respuesta = await consultarBackend(mensaje);
-      hablarConAvatar(respuesta);
     }
   </script>
 </body>
