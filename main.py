@@ -7,7 +7,6 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-DID_API_KEY = "Z29vZ2xlLW9hdXRoMnwxMDMzOTczMTI3MzI5NjkwMzI4Mjg6VElDajc1V0tZRGZXNzlLekxDOXAz"
 DID_URL = "https://api.d-id.com/talks"
 
 # Ruta principal
