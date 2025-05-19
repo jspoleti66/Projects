@@ -1,77 +1,43 @@
-from flask import Flask, request, render_template, jsonify
 import os
 import requests
+from flask import Flask, request, jsonify, send_from_directory
 
 app = Flask(__name__)
 
-# Leer archivos del contexto
-def cargar_contexto():
-    base_path = "data"
-    archivos = {
-        "configuracion": ["prompt_sistema.txt", "instrucciones_generales.txt"],
-        "conocimientos": ["cv.txt", "documentos_tecnicos.txt", "respuestas_frecuentes.txt"],
-        "datos_personales": ["historia_personal.txt", "intereses.txt", "personalidad.txt"],
-        "fuentes_conversacionales": ["chats.txt", "emails.txt"],
-        "proyectos": ["proyectos_actuales.txt", "tecnologias_utilizadas.txt"]
-    }
+DID_TOKEN = os.getenv("DID_TOKEN")  # Obligatorio, debe estar en variables de entorno en Render
 
-    contexto = ""
-    for carpeta, lista_archivos in archivos.items():
-        for archivo in lista_archivos:
-            ruta = os.path.join(base_path, carpeta, archivo)
-            if os.path.exists(ruta):
-                with open(ruta, "r", encoding="utf-8") as f:
-                    contexto += f"\n### {archivo} ({carpeta})\n{f.read()}\n"
-            else:
-                print(f"⚠️ Archivo no encontrado: {ruta}")
-    return contexto.strip()
+@app.route('/')
+def index():
+    return send_from_directory('.', 'index.html')
 
-# Consulta a OpenRouter
-def consultar_openrouter(mensajes):
-    api_key = os.getenv("OPENROUTER_API_KEY") or "TU_API_KEY_AQUI"
+@app.route("/d-id-stream", methods=["POST"])
+def d_id_stream():
+    data = request.json
+    texto = data.get("texto", "Hola desde AlmostMe con D-ID!")
+
     headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://almostme-demo",
-        "X-Title": "almostme-clon"
+        "Authorization": f"Bearer {DID_TOKEN}",
+        "Content-Type": "application/json"
     }
 
     payload = {
-        "model": "meta-llama/llama-4-maverick:free",
-        "messages": mensajes,
-        "temperature": 0.7
+        "script": {
+            "type": "text",
+            "input": texto,
+            "provider": {"type": "microsoft", "voice_id": "es-ES-ElviraNeural"}
+        },
+        "config": {"fluent": True, "pad_audio": 0.5},
+        "image_url": "https://i.imgur.com/p0MUxcq.png"
     }
 
-    response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
-    try:
-        data = response.json()
-        if "choices" in data:
-            return data["choices"][0]["message"]["content"]
-        elif "error" in data:
-            return f"⚠️ Error del modelo: {data['error'].get('message', 'Desconocido')}"
-        else:
-            return "⚠️ El modelo no devolvió respuesta válida."
-    except Exception as e:
-        return f"⚠️ Error procesando la respuesta: {e}"
+    resp = requests.post("https://api.d-id.com/talks/streams", headers=headers, json=payload)
 
-# Contexto inicial
-contexto = cargar_contexto()
-historial = [{
-    "role": "system",
-    "content": f"Eres un clon digital personalizado. Usa únicamente este contexto: {contexto}."
-}]
+    if resp.status_code == 200:
+        return jsonify(resp.json())
+    else:
+        return jsonify({"error": resp.text}), resp.status_code
 
-@app.route("/")
-def index():
-    return render_template("index.html")
-
-@app.route("/chat", methods=["POST"])
-def chat():
-    user_input = request.json.get("message")
-    historial.append({"role": "user", "content": user_input})
-    respuesta = consultar_openrouter(historial)
-    historial.append({"role": "assistant", "content": respuesta})
-    return jsonify({"response": respuesta})
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
