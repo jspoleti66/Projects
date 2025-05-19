@@ -50,6 +50,24 @@ def consultar_openrouter(historial):
     data = response.json()
     return data["choices"][0]["message"]["content"]
 
+# Llamar a la API de D-ID
+def generar_video_did(texto):
+    did_key = os.getenv("DID_API_KEY")
+    headers = {
+        "Authorization": f"Basic {did_key}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "script": {
+            "type": "text",
+            "provider": {"type": "microsoft", "voice_id": "en-US-JennyNeural"},
+            "input": texto
+        },
+        "source_url": "https://models.d-id.com/cecilio-avatar.jpg"  # Tu imagen subida o enlace de avatar
+    }
+
+    r = requests.post("https://api.d-id.com/talks", headers=headers, json=payload)
+    return r.json().get("result_url", None)
 
 # Ruta API principal
 @app.route("/clon", methods=["POST"])
@@ -60,3 +78,5 @@ def clon_endpoint():
     historial = [contexto_sistema, {"role": "user", "content": entrada_usuario}]
     respuesta = consultar_openrouter(historial)
 
+    video_url = generar_video_did(respuesta)
+    return jsonify({"respuesta": respuesta, "video_url": video_url})
