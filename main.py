@@ -1,10 +1,13 @@
+# main.py
+
+from flask import Flask, request, jsonify
 import os
 import requests
 
-# Ruta base donde están los archivos
-BASE_PATH = "data"
+app = Flask(__name__)
 
-# Archivos esperados organizados por carpeta
+# Cargar contexto desde archivos
+BASE_PATH = "data"
 ARCHIVOS = {
     "configuracion": ["prompt_sistema.txt", "instrucciones_generales.txt"],
     "conocimientos": ["cv.txt", "documentos_tecnicos.txt", "respuestas_frecuentes.txt"],
@@ -13,7 +16,6 @@ ARCHIVOS = {
     "proyectos": ["proyectos_actuales.txt", "proyectos/tecnologias_utilizadas.txt"]
 }
 
-# Leer todo el contenido de los archivos
 def cargar_contexto():
     contexto = ""
     for carpeta, archivos in ARCHIVOS.items():
@@ -21,66 +23,60 @@ def cargar_contexto():
             ruta = os.path.join(BASE_PATH, carpeta, archivo)
             if os.path.exists(ruta):
                 with open(ruta, "r", encoding="utf-8") as f:
-                    contexto += f"\n### Contenido de {archivo} (sección {carpeta})\n" + f.read() + "\n"
-            else:
-                print(f"⚠️ Archivo no encontrado: {ruta}")
+                    contexto += f"\n### {archivo} ({carpeta})\n" + f.read() + "\n"
     return contexto.strip()
 
-# Enviar consulta a OpenRouter usando meta-llama/llama-4-maverick:free
-def consultar_openrouter(mensajes):
-    api_key = os.getenv("OPENROUTER_API_KEY") or "TU_API_KEY_AQUI"
+contexto_sistema = {
+    "role": "system",
+    "content": f"Eres un clon digital altamente personalizado. Solo responde con base en este contexto:\n{cargar_contexto()}"
+}
+
+# Consulta OpenRouter
+def consultar_openrouter(historial):
+    api_key = os.getenv("OPENROUTER_API_KEY")
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://almostme-demo",
         "X-Title": "almostme-clon"
     }
-
     payload = {
         "model": "meta-llama/llama-4-maverick:free",
-        "messages": mensajes,
+        "messages": historial,
         "temperature": 0.7
     }
 
     response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
+    data = response.json()
+    return data["choices"][0]["message"]["content"]
 
-    try:
-        data = response.json()
-        if "choices" in data:
-            return data["choices"][0]["message"]["content"]
-        elif "error" in data:
-            return f"⚠️ Error del modelo: {data['error'].get('message', 'Respuesta inválida')}"
-        else:
-            return "⚠️ El modelo no devolvió una respuesta válida."
-    except Exception as e:
-        return f"⚠️ Error procesando la respuesta del modelo: {e}"
+# Llamar a la API de D-ID
+def generar_video_did(texto):
+    did_key = os.getenv("DID_API_KEY")
+    headers = {
+        "Authorization": f"Basic {did_key}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "script": {
+            "type": "text",
+            "provider": {"type": "microsoft", "voice_id": "en-US-JennyNeural"},
+            "input": texto
+        },
+        "source_url": "https://models.d-id.com/cecilio-avatar.jpg"  # Tu imagen subida o enlace de avatar
+    }
 
-# Función principal interactiva con historial de conversación
-def main():
-    contexto = cargar_contexto()
-    historial = [{
-        "role": "system",
-        "content": f"Eres un clon digital altamente personalizado. Responde únicamente en base al siguiente contexto: {contexto}. Si una pregunta no está relacionada, responde educadamente que no tienes información suficiente."
-    }]
+    r = requests.post("https://api.d-id.com/talks", headers=headers, json=payload)
+    return r.json().get("result_url", None)
 
-    print("🤖 Clon interactivo iniciado. Escribe tu mensaje (o 'salir' para terminar, 'reset' para reiniciar contexto).\n")
+# Ruta API principal
+@app.route("/clon", methods=["POST"])
+def clon_endpoint():
+    data = request.get_json()
+    entrada_usuario = data.get("mensaje", "").strip()
 
-    while True:
-        entrada = input("👤 Usuario: ").strip()
-        if entrada.lower() in ["salir", "exit", "quit"]:
-            break
-        if entrada.lower() == "reset":
-            historial = historial[:1]  # Mantener solo el mensaje de sistema
-            print("🔄 Historial reiniciado.")
-            continue
+    historial = [contexto_sistema, {"role": "user", "content": entrada_usuario}]
+    respuesta = consultar_openrouter(historial)
 
-        historial.append({"role": "user", "content": entrada})
-        try:
-            respuesta = consultar_openrouter(historial)
-            historial.append({"role": "assistant", "content": respuesta})
-            print(f"🤖 Clon: {respuesta}\n")
-        except Exception as e:
-            print(f"⚠️ Error: {e}")
-
-if __name__ == "__main__":
-    main()
+    video_url = generar_video_did(respuesta)
+    return jsonify({"respuesta": respuesta, "video_url": video_url})
