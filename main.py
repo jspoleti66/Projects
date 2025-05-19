@@ -12,7 +12,7 @@ def cargar_contexto():
         "conocimientos": ["cv.txt", "documentos_tecnicos.txt", "respuestas_frecuentes.txt"],
         "datos_personales": ["historia_personal.txt", "intereses.txt", "personalidad.txt"],
         "fuentes_conversacionales": ["chats.txt", "emails.txt"],
-        "proyectos": ["proyectos_actuales.txt", "proyectos/tecnologias_utilizadas.txt"]
+        "proyectos": ["proyectos_actuales.txt", "tecnologias_utilizadas.txt"]
     }
 
     contexto = ""
