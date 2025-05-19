@@ -109,47 +109,49 @@
     }
   </script>
 
+  <script src="https://unpkg.com/@d-id/viewer@latest/dist/viewer.bundle.js"></script>
+
   <script>
-  const didToken = "TU_API_KEY_AQUI"; // Reemplaza con tu API Key real
-  const textoDemo = "Hola, soy tu clon digital AlmostMe. Esta es una demostración en tiempo real.";
+    const didToken = "Y2VjYXJyaXpvZ0BnbWFpbC5jb20:KRphQ-Ulqibq5EpN8xj3f"; // Reemplaza con tu clave real de D-ID
+    const textoDemo = "Hola, soy tu clon digital AlmostMe. Esta es una demostración en tiempo real.";
 
-  const streamContainer = document.createElement("div");
-  document.body.appendChild(streamContainer);
+    const streamContainer = document.createElement("div");
+    document.body.appendChild(streamContainer);
 
-  const player = new DIDPlayer({
-    container: streamContainer,
-    width: 400,
-    height: 400,
-  });
-
-  async function iniciarStreaming() {
-    const response = await fetch("https://api.d-id.com/talks/streams", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${didToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        script: {
-          type: "text",
-          input: textoDemo,
-          provider: { type: "microsoft", voice_id: "es-ES-ElviraNeural" }
-        },
-        config: {
-          fluent: true,
-          pad_audio: 0.5
-        },
-        image_url: "https://i.imgur.com/p0MUxcq.png" // Usa una imagen directa, no el link a un álbum
-      }),
+    const player = new D.IDPlayer({
+      container: streamContainer,
+      width: 400,
+      height: 400,
     });
 
-    const data = await response.json();
-    const { stream_url } = data;
-    player.play(stream_url);
-  }
+    async function iniciarStreaming() {
+      const response = await fetch("https://api.d-id.com/talks/streams", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${didToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          script: {
+            type: "text",
+            input: textoDemo,
+            provider: { type: "microsoft", voice_id: "es-ES-ElviraNeural" }
+          },
+          config: {
+            fluent: true,
+            pad_audio: 0.5
+          },
+          image_url: "https://i.imgur.com/p0MUxcq.png" // Imagen directa, no un álbum
+        }),
+      });
 
-  iniciarStreaming();
-</script>
+      const data = await response.json();
+      const { stream_url } = data;
+      player.play(stream_url);
+    }
+
+    iniciarStreaming();
+  </script>
 
 </body>
 </html>
