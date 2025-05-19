@@ -108,5 +108,50 @@
       chat.scrollTop = chat.scrollHeight;
     }
   </script>
+
+
+  <script src="https://unpkg.com/@d-id/viewer@latest/dist/viewer.bundle.js"></script>
+  <script>
+    const didToken = "TU_API_KEY_AQUI"; // Usa tu API Key de D-ID aquí
+    const textoDemo = "Hola, soy tu clon digital AlmostMe. Esta es una demostración en tiempo real.";
+
+    const streamContainer = document.createElement("div");
+    document.body.appendChild(streamContainer);
+
+    const viewer = new DIdViewer({
+      container: streamContainer,
+      width: 400,
+      height: 400,
+    });
+
+    async function iniciarStreaming() {
+      const response = await fetch("https://api.d-id.com/talks/streams", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${didToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          script: {
+            type: "text",
+            input: textoDemo,
+            provider: { type: "microsoft", voice_id: "es-ES-ElviraNeural" }
+          },
+          config: {
+            fluent: true,
+            pad_audio: 0.5
+          },
+          image_url: "https://imgur.com/a/ZxPUdV8" // Tu imagen subida públicamente
+        }),
+    });
+
+    const data = await response.json();
+    const { stream_url } = data;
+    viewer.start(stream_url);
+  }
+
+  iniciarStreaming();
+</script>
+
 </body>
 </html>
