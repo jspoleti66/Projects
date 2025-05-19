@@ -1,81 +1,45 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<title>Clon Parlante AlmostMe</title>
-<style>
-  #avatar {
-    width: 200px;
-  }
-  #mouthCanvas {
-    border: 1px solid #ccc;
-    width: 200px;
-    height: 50px;
-    margin-top: 5px;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <title>AlmostMe Clon</title>
+  <style>
+    body { font-family: sans-serif; padding: 2em; background: #f5f5f5; }
+    #chat { max-width: 600px; margin: auto; }
+    .mensaje { margin: 1em 0; }
+    .usuario { font-weight: bold; color: #007bff; }
+    .clon { color: #333; margin-left: 1em; }
+  </style>
 </head>
 <body>
-<h1>Clon Parlante - AlmostMe</h1>
-<input type="text" id="mensaje" placeholder="Escribí algo..." size="50" />
-<button onclick="enviar()">Enviar</button>
+  <div id="chat">
+    <h2>🧠 AlmostMe Clon</h2>
+    <div id="mensajes"></div>
+    <form id="formulario">
+      <input type="text" id="entrada" placeholder="Escribí tu pregunta..." style="width: 80%;" required />
+      <button type="submit">Enviar</button>
+    </form>
+  </div>
+  <script>
+    const form = document.getElementById("formulario");
+    const entrada = document.getElementById("entrada");
+    const mensajes = document.getElementById("mensajes");
 
-<div>
-  <img id="avatar" src="/static/mi_avatar.png" alt="Avatar" />
-  <canvas id="mouthCanvas" width="200" height="50"></canvas>
-</div>
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const mensajeUsuario = entrada.value;
+      mensajes.innerHTML += `<div class="mensaje"><span class="usuario">Vos:</span> ${mensajeUsuario}</div>`;
+      entrada.value = "";
 
-<audio id="audio" controls></audio>
+      const respuesta = await fetch("/clon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mensaje: mensajeUsuario })
+      });
 
-<script>
-  async function enviar() {
-    const mensaje = document.getElementById("mensaje").value;
-    if (!mensaje) return alert("Escribí algo para enviar");
-
-    const resp = await fetch("/clon", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mensaje })
+      const data = await respuesta.json();
+      mensajes.innerHTML += `<div class="mensaje"><span class="clon">Clon:</span> ${data.respuesta}</div>`;
     });
-    const data = await resp.json();
-
-    if(data.error){
-      alert("Error: " + data.error);
-      return;
-    }
-
-    document.getElementById("audio").src = data.audio_url;
-    document.getElementById("audio").play();
-
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const audioElement = document.getElementById("audio");
-    const canvas = document.getElementById("mouthCanvas");
-    const ctx = canvas.getContext("2d");
-
-    const source = audioCtx.createMediaElementSource(audioElement);
-    const analyser = audioCtx.createAnalyser();
-    source.connect(analyser);
-    analyser.connect(audioCtx.destination);
-    analyser.fftSize = 256;
-    const dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-    function animate() {
-      analyser.getByteFrequencyData(dataArray);
-      const volume = dataArray.reduce((a,b) => a + b) / dataArray.length;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#ff4b5c";
-      ctx.fillRect(50, 10, 100, volume / 5);
-
-      if (!audioElement.paused && !audioElement.ended) {
-        requestAnimationFrame(animate);
-      } else {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
-    }
-
-    animate();
-  }
-</script>
+  </script>
 </body>
 </html>
