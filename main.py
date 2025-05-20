@@ -5,6 +5,7 @@ from flask import Flask, request, jsonify, render_template
 app = Flask(__name__, template_folder='templates')
 
 DID_TOKEN = os.getenv("DID_TOKEN")
+print("DID_TOKEN:", DID_TOKEN[:10])  # solo los primeros caracteres
 
 @app.route('/')
 def index():
