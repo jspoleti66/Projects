@@ -1,14 +1,14 @@
 import os
 import requests
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, render_template
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates')
 
-DID_TOKEN = os.getenv("DID_TOKEN")  # Obligatorio, debe estar en variables de entorno en Render
+DID_TOKEN = os.getenv("DID_TOKEN")
 
 @app.route('/')
 def index():
-    return send_from_directory('.', 'index.html')
+    return render_template('index.html')
 
 @app.route("/d-id-stream", methods=["POST"])
 def d_id_stream():
@@ -36,7 +36,6 @@ def d_id_stream():
         return jsonify(resp.json())
     else:
         return jsonify({"error": resp.text}), resp.status_code
-
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
