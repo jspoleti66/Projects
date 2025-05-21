@@ -22,7 +22,7 @@ def index():
 @app.route("/create_stream", methods=["POST"])
 def create_stream():
     data = request.get_json()
-    source_url = data.get("source_url", "https://i.imgur.com/p0MUxcq.png")
+    source_url = data.get("source_url", "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png")
 
     # Crear stream
     response = requests.post(
