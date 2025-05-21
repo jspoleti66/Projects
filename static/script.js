@@ -1,16 +1,17 @@
 async function startStream() {
   const output = document.getElementById('output');
-  output.textContent = 'Cargando...';
+  const iframe = document.getElementById('streamFrame');
+  output.textContent = 'Generando...';
+  iframe.style.display = 'none';
 
   try {
-    const res = await fetch('/start-stream', {
-      method: 'POST'
-    });
-
+    const res = await fetch('/start-stream', { method: 'POST' });
     const data = await res.json();
 
-    if (res.ok) {
-      output.textContent = JSON.stringify(data, null, 2);
+    if (res.ok && data.stream_url) {
+      output.textContent = 'Avatar parlante cargado correctamente.';
+      iframe.src = data.stream_url;
+      iframe.style.display = 'block';
     } else {
       output.textContent = `Error: ${JSON.stringify(data)}`;
     }
