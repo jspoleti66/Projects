@@ -2,14 +2,14 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Prueba Streaming D-ID</title>
+  <title>AlmostMe Streaming</title>
   <style>
     body { font-family: sans-serif; text-align: center; margin-top: 2em; }
     video { width: 400px; border-radius: 1em; margin-top: 1em; }
   </style>
 </head>
 <body>
-  <h1>Prueba de Streaming en Tiempo Real con D-ID</h1>
+  <h1>Clon Interactivo - D-ID Streaming</h1>
   <button id="startBtn">Iniciar Avatar</button>
   <video id="avatar" autoplay muted playsinline></video>
 
@@ -21,11 +21,11 @@
 
     startBtn.onclick = async () => {
       const stream = await DID.createTalkStream({
-        apiKey: "TU_API_KEY_AQUI", // <-- reemplaza con tu API key de D-ID
+        apiKey: "TU_API_KEY_DE_DID", // 🔐 Reemplazá esto
         sourceUrl: "https://i.imgur.com/p0MUxcq.png",
         script: {
           type: "text",
-          input: "Hola, soy tu clon interactivo. Estoy transmitiendo en tiempo real.",
+          input: "Hola, soy tu clon interactivo en tiempo real.",
           provider: {
             type: "microsoft",
             voice_id: "es-ES-ElviraNeural"
