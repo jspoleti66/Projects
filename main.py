@@ -16,9 +16,11 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 
+from flask import render_template
+
 @app.route("/")
 def index():
-    return send_file("index.html")  # o usa templates + render_template
+    return render_template("index.html")
 
 @app.route("/create_stream", methods=["POST"])
 def create_stream():
