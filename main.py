@@ -14,7 +14,15 @@ def home():
 def start_stream():
     payload = {
         "source_url": "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png",
-        "driver_url": "bank://lively"
+        "driver_url": "bank://lively",
+        "script": {
+            "type": "text",
+            "input": "Hola, soy tu clon parlante generado con D-ID.",
+            "provider": {
+                "type": "microsoft",
+                "voice_id": "es-ES-AlvaroNeural"
+            }
+        }
     }
 
     headers = {
@@ -24,9 +32,10 @@ def start_stream():
 
     try:
         response = requests.post(API_URL, json=payload, headers=headers)
-        return jsonify(response.json()), response.status_code
+        data = response.json()
+        return jsonify({
+            "stream_url": data.get("stream_url", ""),
+            "id": data.get("id", "")
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
