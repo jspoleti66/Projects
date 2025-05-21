@@ -26,8 +26,9 @@ def start_stream():
     }
 
     headers = {
-        "Authorization": f"Basic {D_ID_AUTH_HEADER}",
-        "Content-Type": "application/json"
+    "Authorization": f"Basic {D_ID_AUTH_HEADER}",
+    "Content-Type": "application/json",
+    "Accept": "application/json"
     }
 
     try:
