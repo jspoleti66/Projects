@@ -23,16 +23,17 @@
     let pc, streamId, sessionId;
 
     async function startAvatar() {
-      const res = await fetch("https://api.d-id.com/talks/streams", {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${apiKey}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          source_url: imageUrl
-        })
-      });
+      
+    const res = await fetch("/create_stream", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        source_url: imageUrl
+      })
+    });
+
 
       const { id, session_id, offer, ice_servers } = await res.json();
       streamId = id;
