@@ -1,51 +1,45 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <title>Prueba D-ID Streaming</title>
-    <script src="https://cdn.jsdelivr.net/npm/@d-id/viewer@0.0.4/dist/viewer.bundle.js"></script>
-    <style>
-      body { font-family: Arial, sans-serif; margin: 30px; }
-      #player { width: 480px; height: 360px; border: 1px solid #ccc; margin-top: 20px; }
-      button { padding: 10px 20px; font-size: 16px; }
-      textarea { width: 480px; height: 80px; font-size: 16px; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Prueba Streaming D-ID</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin-top: 2em; }
+    video { width: 400px; border-radius: 1em; margin-top: 1em; }
+  </style>
 </head>
 <body>
-    <h1>Prueba rápida D-ID Streaming</h1>
-    <textarea id="texto" placeholder="Escribí el texto para que el video lo diga...">Hola, esta es una prueba rápida con D-ID Streaming.</textarea><br />
-    <button onclick="hablar()">Hablar</button>
-    <div id="player"></div>
+  <h1>Prueba de Streaming en Tiempo Real con D-ID</h1>
+  <button id="startBtn">Iniciar Avatar</button>
+  <video id="avatar" autoplay muted playsinline></video>
 
-    <script>
-      let player = null;
-      
-      function hablar() {
-        const texto = document.getElementById("texto").value;
-        fetch("/d-id-stream", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ texto })
-        })
-        .then(res => res.json())
-        .then(data => {
-          if(data.stream_url){
-            if(player) player.destroy();
-            player = new DIDViewer({
-              containerId: "player",
-              width: 480,
-              height: 360,
-              autoPlay: true
-            });
-            player.play(data.stream_url);
-          } else {
-            alert("Error: " + JSON.stringify(data.error || data));
+  <script type="module">
+    import DID from "https://cdn.jsdelivr.net/npm/@d-id/webrtc@latest/dist/index.min.js";
+
+    const startBtn = document.getElementById('startBtn');
+    const videoElement = document.getElementById('avatar');
+
+    startBtn.onclick = async () => {
+      const stream = await DID.createTalkStream({
+        apiKey: "TU_API_KEY_AQUI", // <-- reemplaza con tu API key de D-ID
+        sourceUrl: "https://i.imgur.com/p0MUxcq.png",
+        script: {
+          type: "text",
+          input: "Hola, soy tu clon interactivo. Estoy transmitiendo en tiempo real.",
+          provider: {
+            type: "microsoft",
+            voice_id: "es-ES-ElviraNeural"
           }
-        })
-        .catch(err => {
-          alert("Error de conexión o servidor: " + err);
-        });
-      }
-    </script>
+        },
+        config: {
+          fluent: true,
+          pad_audio: 0.5
+        },
+        videoElement
+      });
+
+      await stream.start();
+    };
+  </script>
 </body>
 </html>
