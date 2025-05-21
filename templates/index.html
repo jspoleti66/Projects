@@ -1,45 +1,109 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>AlmostMe Streaming</title>
+  <meta charset="UTF-8" />
+  <title>D-ID Streaming WebRTC</title>
   <style>
-    body { font-family: sans-serif; text-align: center; margin-top: 2em; }
-    video { width: 400px; border-radius: 1em; margin-top: 1em; }
+    body { font-family: Arial; text-align: center; margin-top: 50px; }
+    video { width: 400px; border: 1px solid #ccc; border-radius: 8px; margin-top: 20px; }
   </style>
 </head>
 <body>
-  <h1>Clon Interactivo - D-ID Streaming</h1>
+  <h1>Streaming en Tiempo Real con D-ID</h1>
   <button id="startBtn">Iniciar Avatar</button>
   <video id="avatar" autoplay muted playsinline></video>
 
-  <script type="module">
-    import DID from "https://cdn.jsdelivr.net/npm/@d-id/webrtc@latest/dist/index.min.js";
+  <script>
+    const apiKey = "TU_API_KEY_EN_BASE64"; // <-- ⚠️ IMPORTANTE: token codificado en Base64 para autenticación HTTP Basic
+    const imageUrl = "https://i.imgur.com/p0MUxcq.png";
+    const text = "Hola, esta es una prueba completa de WebRTC en D-ID";
+    const videoElement = document.getElementById("avatar");
+    const startBtn = document.getElementById("startBtn");
 
-    const startBtn = document.getElementById('startBtn');
-    const videoElement = document.getElementById('avatar');
+    let pc, streamId, sessionId;
 
-    startBtn.onclick = async () => {
-      const stream = await DID.createTalkStream({
-        apiKey: "Y2VjYXJyaXpvZ0BnbWFpbC5jb20:izm6ZhB3wokC-qPpZTYWJ", // 🔐 Reemplazá esto
-        sourceUrl: "https://i.imgur.com/p0MUxcq.png",
-        script: {
-          type: "text",
-          input: "Hola, soy tu clon interactivo en tiempo real.",
-          provider: {
-            type: "microsoft",
-            voice_id: "es-ES-ElviraNeural"
-          }
+    async function startAvatar() {
+      const res = await fetch("https://api.d-id.com/talks/streams", {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${apiKey}`,
+          "Content-Type": "application/json"
         },
-        config: {
-          fluent: true,
-          pad_audio: 0.5
-        },
-        videoElement
+        body: JSON.stringify({
+          source_url: imageUrl
+        })
       });
 
-      await stream.start();
-    };
+      const { id, session_id, offer, ice_servers } = await res.json();
+      streamId = id;
+      sessionId = session_id;
+
+      pc = new RTCPeerConnection({ iceServers: ice_servers });
+      pc.addEventListener("icecandidate", onIceCandidate);
+      pc.addEventListener("track", (event) => {
+        videoElement.srcObject = event.streams[0];
+      });
+
+      await pc.setRemoteDescription({ type: "offer", sdp: offer });
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      await fetch(`https://api.d-id.com/talks/streams/${streamId}/sdp`, {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          answer: answer.sdp,
+          session_id: sessionId
+        })
+      });
+
+      // Iniciar el “talk” (el audio/voz)
+      await fetch(`https://api.d-id.com/talks/streams/${streamId}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          script: {
+            type: "text",
+            input: text,
+            provider: {
+              type: "microsoft",
+              voice_id: "es-ES-ElviraNeural"
+            }
+          },
+          config: {
+            fluent: true,
+            pad_audio: 0.5
+          },
+          session_id: sessionId
+        })
+      });
+    }
+
+    function onIceCandidate(event) {
+      if (!event.candidate) return;
+      const { candidate, sdpMid, sdpMLineIndex } = event.candidate;
+      fetch(`https://api.d-id.com/talks/streams/${streamId}/ice`, {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          candidate,
+          sdpMid,
+          sdpMLineIndex,
+          session_id: sessionId
+        })
+      });
+    }
+
+    startBtn.onclick = startAvatar;
   </script>
 </body>
 </html>
