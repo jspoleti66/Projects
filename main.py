@@ -13,11 +13,11 @@ def home():
 @app.route('/start-stream', methods=['POST'])
 def start_stream():
     payload = {
-        "source_url": "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png",
-        "driver_url": "bank://lively",
-        "script": {
-            "type": "text",
-            "input": "Hola, soy tu clon parlante generado con D-ID."
+    "source_url": "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png",
+    "driver_url": "bank://lively",
+    "script": {
+        "type": "text",
+        "input": "Hola, soy tu clon parlante generado con D-ID."
         }
     }
 
