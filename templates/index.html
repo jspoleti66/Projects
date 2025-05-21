@@ -4,8 +4,9 @@
   <meta charset="UTF-8" />
   <title>D-ID Streaming WebRTC</title>
   <style>
-    body { font-family: Arial; text-align: center; margin-top: 50px; }
+    body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
     video { width: 400px; border: 1px solid #ccc; border-radius: 8px; margin-top: 20px; }
+    button { padding: 10px 20px; font-size: 16px; margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -14,36 +15,50 @@
   <video id="avatar" autoplay muted playsinline></video>
 
   <script>
-    const apiKey = "Y2VjYXJyaXpvZ0BnbWFpbC5jb20:izm6ZhB3wokC-qPpZTYWJ"; // <-- ⚠️ IMPORTANTE: token codificado en Base64 para autenticación HTTP Basic
+    const apiKey = "Y2VjYXJyaXpvZ0BnbWFpbC5jb20:izm6ZhB3wokC-qPpZTYWJ"; // ⚠️ Codificado en Base64
     const imageUrl = "https://i.imgur.com/p0MUxcq.png";
     const text = "Hola, esta es una prueba completa de WebRTC en D-ID";
-    const videoElement = document.getElementById("avatar");
+
     const startBtn = document.getElementById("startBtn");
+    const videoElement = document.getElementById("avatar");
 
     let pc, streamId, sessionId;
 
-    async function startAvatar() {
-      
-    const res = await fetch("/create_stream", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        source_url: imageUrl
-      })
-    });
-
+    startBtn.onclick = async () => {
+      const res = await fetch("/create_stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source_url: imageUrl })
+      });
 
       const { id, session_id, offer, ice_servers } = await res.json();
       streamId = id;
       sessionId = session_id;
 
       pc = new RTCPeerConnection({ iceServers: ice_servers });
-      pc.addEventListener("icecandidate", onIceCandidate);
-      pc.addEventListener("track", (event) => {
+
+      pc.ontrack = (event) => {
         videoElement.srcObject = event.streams[0];
-      });
+      };
+
+      pc.onicecandidate = (event) => {
+        if (!event.candidate) return;
+        const { candidate, sdpMid, sdpMLineIndex } = event.candidate;
+
+        fetch(`https://api.d-id.com/talks/streams/${streamId}/ice`, {
+          method: "POST",
+          headers: {
+            Authorization: `Basic ${apiKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            candidate,
+            sdpMid,
+            sdpMLineIndex,
+            session_id: sessionId
+          })
+        });
+      };
 
       await pc.setRemoteDescription({ type: "offer", sdp: offer });
       const answer = await pc.createAnswer();
@@ -61,7 +76,7 @@
         })
       });
 
-      // Iniciar el “talk” (el audio/voz)
+      // Enviar el texto para que el avatar hable
       await fetch(`https://api.d-id.com/talks/streams/${streamId}`, {
         method: "POST",
         headers: {
@@ -84,27 +99,7 @@
           session_id: sessionId
         })
       });
-    }
-
-    function onIceCandidate(event) {
-      if (!event.candidate) return;
-      const { candidate, sdpMid, sdpMLineIndex } = event.candidate;
-      fetch(`https://api.d-id.com/talks/streams/${streamId}/ice`, {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${apiKey}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          candidate,
-          sdpMid,
-          sdpMLineIndex,
-          session_id: sessionId
-        })
-      });
-    }
-
-    startBtn.onclick = startAvatar;
+    };
   </script>
 </body>
 </html>
