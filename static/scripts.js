@@ -1,22 +1,20 @@
 async function startStream() {
-  const apiKey = "WTJWallYSnlhWHB2WjBCbmJXRnBiQzVqYjIwOml6bTZaaEIzd29rQy1xUHBaVFlXSg=="; // Tu API key en Base64
+  const output = document.getElementById('output');
+  output.textContent = 'Cargando...';
 
-  const response = await fetch("https://api.d-id.com/talks/streams", {
-    method: "POST",
-    headers: {
-      "Authorization": `Basic ${apiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      source_url: "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png",
-      driver_url: "bank://lively"
-    })
-  });
+  try {
+    const res = await fetch('/start-stream', {
+      method: 'POST'
+    });
 
-  const result = await response.json();
-  console.log(result);
+    const data = await res.json();
 
-  document.getElementById("result").innerText = response.ok
-    ? `Stream ID: ${result.id}`
-    : `Error: ${result.error}`;
+    if (res.ok) {
+      output.textContent = JSON.stringify(data, null, 2);
+    } else {
+      output.textContent = `Error: ${JSON.stringify(data)}`;
+    }
+  } catch (err) {
+    output.textContent = `Error: ${err.message}`;
+  }
 }
