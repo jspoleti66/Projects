@@ -1,45 +1,22 @@
-window.agenteListo = false;
+async function startStream() {
+  const apiKey = "WTJWallYSnlhWHB2WjBCbmJXRnBiQzVqYjIwOml6bTZaaEIzd29rQy1xUHBaVFlXSg=="; // Tu API key en Base64
 
-// Escuchar cuando el agente D-ID esté listo
-window.addEventListener("message", (event) => {
-  if (event.data?.type === "agent-ready") {
-    console.log("🟢 Agente D-ID listo");
-    window.agenteListo = true;
-  }
-});
+  const response = await fetch("https://api.d-id.com/talks/streams", {
+    method: "POST",
+    headers: {
+      "Authorization": `Basic ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      source_url: "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png",
+      driver_url: "bank://lively"
+    })
+  });
 
-document.getElementById("formulario").addEventListener("submit", async (e) => {
-  e.preventDefault();
+  const result = await response.json();
+  console.log(result);
 
-  const userInput = document.getElementById("inputTexto").value;
-  const respuestaDiv = document.getElementById("respuesta");
-  respuestaDiv.textContent = "Pensando...";
-
-  try {
-    const response = await fetch("/clon", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mensaje: userInput })
-    });
-
-    const data = await response.json();
-    const respuestaTexto = data.respuesta;
-
-    respuestaDiv.textContent = respuestaTexto;
-
-    // Enviar la respuesta al agente para que hable
-    if (window.agenteListo) {
-      window.postMessage({
-        type: "agent-action",
-        action: "speak",
-        text: respuestaTexto
-      }, "*");
-    } else {
-      console.warn("El agente D-ID aún no está listo para hablar.");
-    }
-
-  } catch (error) {
-    console.error("❌ Error al obtener respuesta del clon:", error);
-    respuestaDiv.textContent = "Error al obtener respuesta.";
-  }
-});
+  document.getElementById("result").innerText = response.ok
+    ? `Stream ID: ${result.id}`
+    : `Error: ${result.error}`;
+}
