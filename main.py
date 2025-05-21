@@ -17,11 +17,7 @@ def start_stream():
         "driver_url": "bank://lively",
         "script": {
             "type": "text",
-            "input": "Hola, soy tu clon parlante generado con D-ID.",
-            "provider": {
-                "type": "microsoft",
-                "voice_id": "es-ES-AlvaroNeural"
-            }
+            "input": "Hola, soy tu clon parlante generado con D-ID."
         }
     }
 
