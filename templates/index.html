@@ -1,105 +1,14 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>D-ID Streaming WebRTC</title>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
-    video { width: 400px; border: 1px solid #ccc; border-radius: 8px; margin-top: 20px; }
-    button { padding: 10px 20px; font-size: 16px; margin-top: 10px; }
-  </style>
+  <meta charset="UTF-8">
+  <title>Prueba piloto - D-ID Streaming</title>
 </head>
 <body>
-  <h1>Streaming en Tiempo Real con D-ID</h1>
-  <button id="startBtn">Iniciar Avatar</button>
-  <video id="avatar" autoplay muted playsinline></video>
+  <h1>Prueba de Streaming con D-ID</h1>
+  <button onclick="startStream()">Iniciar Streaming</button>
+  <p id="result"></p>
 
-  <script>
-    const apiKey = "Y2VjYXJyaXpvZ0BnbWFpbC5jb20:izm6ZhB3wokC-qPpZTYWJ"; // ⚠️ Codificado en Base64
-    const imageUrl = "https://i.imgur.com/p0MUxcq.png";
-    const text = "Hola, esta es una prueba completa de WebRTC en D-ID";
-
-    const startBtn = document.getElementById("startBtn");
-    const videoElement = document.getElementById("avatar");
-
-    let pc, streamId, sessionId;
-
-    startBtn.onclick = async () => {
-      const res = await fetch("/create_stream", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source_url: imageUrl })
-      });
-
-      const { id, session_id, offer, ice_servers } = await res.json();
-      streamId = id;
-      sessionId = session_id;
-
-      pc = new RTCPeerConnection({ iceServers: ice_servers });
-
-      pc.ontrack = (event) => {
-        videoElement.srcObject = event.streams[0];
-      };
-
-      pc.onicecandidate = (event) => {
-        if (!event.candidate) return;
-        const { candidate, sdpMid, sdpMLineIndex } = event.candidate;
-
-        fetch(`https://api.d-id.com/talks/streams/${streamId}/ice`, {
-          method: "POST",
-          headers: {
-            Authorization: `Basic ${apiKey}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            candidate,
-            sdpMid,
-            sdpMLineIndex,
-            session_id: sessionId
-          })
-        });
-      };
-
-      await pc.setRemoteDescription({ type: "offer", sdp: offer });
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-
-      await fetch(`https://api.d-id.com/talks/streams/${streamId}/sdp`, {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${apiKey}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          answer: answer.sdp,
-          session_id: sessionId
-        })
-      });
-
-      // Enviar el texto para que el avatar hable
-      await fetch(`https://api.d-id.com/talks/streams/${streamId}`, {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${apiKey}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          script: {
-            type: "text",
-            input: text,
-            provider: {
-              type: "microsoft",
-              voice_id: "es-ES-ElviraNeural"
-            }
-          },
-          config: {
-            fluent: true,
-            pad_audio: 0.5
-          },
-          session_id: sessionId
-        })
-      });
-    };
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
