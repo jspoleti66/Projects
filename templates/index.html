@@ -1,15 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Prueba piloto - D-ID Streaming</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>D-ID Stream Web</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; background: #f2f2f2; }
+    button { padding: 0.6rem 1.2rem; font-size: 1rem; }
+    #output { margin-top: 1rem; white-space: pre-wrap; background: #fff; padding: 1rem; border-radius: 8px; }
+  </style>
 </head>
 <body>
-  <h1>Prueba de Streaming con D-ID</h1>
-  <button onclick="startStream()">Iniciar Streaming</button>
-  <p id="result"></p>
+  <h1>Iniciar Stream en D-ID</h1>
+  <button onclick="startStream()">Iniciar</button>
+  <div id="output"></div>
 
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
-  
+  <script src="/static/script.js"></script>
 </body>
 </html>
