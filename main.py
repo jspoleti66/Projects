@@ -1,34 +1,35 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify
 import requests
 import base64
 
 app = Flask(__name__)
 
-# Tu API key en base64 para Authorization
-API_KEY = "WTJWallYSnlhWHB2WjBCbmJXRnBiQzVqYjIwOml6bTZaaEIzd29rQy1xUHBaVFlXSg=="
+# Puedes ocultar esta clave en variables de entorno en producción
+D_ID_AUTH_HEADER = "WTJWallYSnlhWHB2WjBCbmJXRnBiQzVqYjIwOml6bTZaaEIzd29rQy1xUHBaVFlXSg=="
+API_URL = "https://api.d-id.com/talks/streams"
 
-@app.route("/")
-def index():
-    return render_template("index.html")
-
-@app.route("/start-stream", methods=["POST"])
+@app.route('/start-stream', methods=['POST'])
 def start_stream():
-    data = {
+    # Puedes extender esto para recibir `source_url` y `driver_url` como parámetros
+    payload = {
         "source_url": "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png",
         "driver_url": "bank://lively"
     }
-    
+
     headers = {
-        "Authorization": f"Basic {API_KEY}",
+        "Authorization": f"Basic {D_ID_AUTH_HEADER}",
         "Content-Type": "application/json"
     }
-    
-    response = requests.post("https://api.d-id.com/talks/streams", json=data, headers=headers)
-    
-    if response.ok:
-        return jsonify(response.json())
-    else:
-        return jsonify({"error": response.text}), response.status_code
 
-if __name__ == "__main__":
-    app.run(debug=True)
+    try:
+        response = requests.post(API_URL, json=payload, headers=headers)
+        return jsonify(response.json()), response.status_code
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/')
+def home():
+    return 'D-ID Stream Web Service Ready 🚀'
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
