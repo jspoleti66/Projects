@@ -1,25 +1,44 @@
-import { DID } from "https://cdn.jsdelivr.net/npm/@d-id/talks-sdk@latest/dist/talks.min.js";
+import DID from "https://cdn.jsdelivr.net/npm/@d-id/web-sdk@latest/dist/index.min.js";
 
-async function startStream() {
-  const output = document.getElementById('output');
-  const videoElement = document.getElementById('talk-video');
+const startBtn = document.getElementById("start-btn");
+const output = document.getElementById("output");
+const video = document.getElementById("talk-video");
 
-  output.innerText = "Iniciando streaming...";
+let client;
+
+startBtn.onclick = async () => {
+  output.innerText = "Iniciando talk...";
 
   try {
-    const res = await fetch('/start-stream', { method: 'POST' });
+    const res = await fetch('/start-talk', { method: 'POST' });
     const data = await res.json();
 
-    if (!data.id) {
-      output.innerText = "Error al crear el stream: " + JSON.stringify(data);
+    if (data.error) {
+      output.innerText = "Error: " + data.error;
       return;
     }
 
-    const streamId = data.id;
-    const session = await DID.createTalkStream({ streamId, videoElement });
+    const talkId = data.talk_id;
+    output.innerText = "Talk creado: " + talkId;
 
-    output.innerText = "Streaming iniciado correctamente.";
+    // Crear cliente D-ID WebRTC
+    client = new DID.WebRTCClient();
+
+    client.on('play', () => {
+      output.innerText = "Streaming en vivo...";
+    });
+
+    client.on('error', (err) => {
+      output.innerText = "Error streaming: " + err.message;
+    });
+
+    // Conectar y reproducir stream
+    await client.connect(talkId);
+
+    // Poner el stream en el video tag
+    video.srcObject = client.getMediaStream();
+
   } catch (err) {
     output.innerText = "Error: " + err.message;
   }
-}
+};
