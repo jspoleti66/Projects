@@ -1,80 +1,79 @@
-from flask import Flask, render_template, request, jsonify
+```python
+from flask import Flask, request, jsonify, send_from_directory
 import requests
+import time
+import os
 
 app = Flask(__name__)
 
-# Cambia este por tu API Key D-ID base64 "Basic xxx"
-D_ID_AUTH_HEADER = "Basic WTJWallYSnlhWHB2WjBCbmJXRnBiQzVqYjIwOml6bTZaaEIzd29rQy1xUHBaVFlXSg=="
+D_ID_API_KEY = os.getenv("D_ID_API_KEY")
+TALK_IMAGE_URL = os.getenv("TALK_IMAGE_URL")
+VOICE_ID = os.getenv("VOICE_ID", "en-US-Wavenet-F")
+SOURCE_IMAGE_URL = TALK_IMAGE_URL or "https://i.imgur.com/your_image.jpg"
 
-HEADERS = {
-    "Authorization": D_ID_AUTH_HEADER,
-    "Content-Type": "application/json",
-    "Accept": "application/json"
+headers = {
+    "Authorization": f"Bearer {D_ID_API_KEY}",
+    "Content-Type": "application/json"
 }
 
-BASE_URL = "https://api.d-id.com"
+@app.route("/start-stream", methods=["POST"])
+def start_stream():
+    payload = {
+        "source_url": SOURCE_IMAGE_URL,
+        "config": {
+            "fluent": True,
+            "driver_expressions": {
+                "expressions": [
+                    {"start_frame": 0, "expression": "neutral", "intensity": 0}
+                ]
+            },
+            "result_format": "webm",
+            "stitch": True,
+            "output_resolution": 512
+        },
+        "enable_streaming": True
+    }
+    res = requests.post("https://api.d-id.com/talks", headers=headers, json=payload)
+    if res.status_code != 200:
+        return jsonify({"error": res.text}), res.status_code
 
-# Variable global para guardar talkId (en producción usar DB o contexto)
-talk_id_global = None
+    talk = res.json()
+    talk_id = talk.get("id")
+
+    # Polling until talk status is "created"
+    for _ in range(10):
+        status_res = requests.get(f"https://api.d-id.com/talks/{talk_id}", headers=headers)
+        status = status_res.json().get("status")
+        if status == "created":
+            return jsonify({"talk_id": talk_id})
+        time.sleep(1)
+
+    return jsonify({"error": "Timeout waiting for talk to be created."}), 504
+
+@app.route("/webrtc-offer/<talk_id>", methods=["POST"])
+def handle_offer(talk_id):
+    offer = request.json.get("sdp")
+    if not offer:
+        return jsonify({"error": "No SDP offer"}), 400
+
+    response = requests.post(
+        f"https://api.d-id.com/talks/streams/{talk_id}/sdp-offer",
+        headers=headers,
+        json={"sdp": offer}
+    )
+    if response.status_code != 200:
+        return jsonify({"error": response.text}), response.status_code
+
+    return jsonify(response.json())
 
 @app.route("/")
-def index():
-    return render_template("index.html")
+def serve_index():
+    return send_from_directory(".", "index.html")
 
-@app.route("/start-talk", methods=["POST"])
-def start_talk():
-    global talk_id_global
-    payload = {
-        "source_url": "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png",
-        "driver_url": "bank://lively",
-        "script": {
-            "type": "text",
-            "input": "Hola, soy tu clon parlante generado con D-ID."
-        },
-        "streaming": True
-    }
-    try:
-        res = requests.post(f"{BASE_URL}/talks", json=payload, headers=HEADERS)
-        res.raise_for_status()
-        data = res.json()
-        talk_id_global = data.get("id")
-        return jsonify({"talk_id": talk_id_global})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/webrtc-offer/<talk_id>")
-def webrtc_offer(talk_id):
-    try:
-        res = requests.get(f"{BASE_URL}/talks/{talk_id}/webrtc", headers=HEADERS)
-        res.raise_for_status()
-        data = res.json()
-        return jsonify({"sdp": data.get("sdp")})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/webrtc-answer/<talk_id>", methods=["POST"])
-def webrtc_answer(talk_id):
-    sdp = request.json.get("sdp")
-    if not sdp:
-        return jsonify({"error": "No SDP provided"}), 400
-    try:
-        res = requests.post(f"{BASE_URL}/talks/{talk_id}/webrtc", json={"sdp": sdp}, headers=HEADERS)
-        res.raise_for_status()
-        return jsonify({"result": "Answer accepted"})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/webrtc-candidate/<talk_id>", methods=["POST"])
-def webrtc_candidate(talk_id):
-    candidate = request.json.get("candidate")
-    if not candidate:
-        return jsonify({"error": "No candidate provided"}), 400
-    try:
-        res = requests.post(f"{BASE_URL}/talks/{talk_id}/webrtc/candidates", json={"candidate": candidate}, headers=HEADERS)
-        res.raise_for_status()
-        return jsonify({"result": "Candidate accepted"})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+@app.route("/script.js")
+def serve_script():
+    return send_from_directory(".", "script.js")
 
 if __name__ == "__main__":
     app.run(debug=True)
+```
