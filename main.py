@@ -31,17 +31,14 @@ def start_stream():
         response = requests.post(API_URL, json=payload, headers=headers)
         data = response.json()
         stream_id = data.get("id", "")
-
+        stream_url = f"https://talks.d-id.com/stream/{stream_id}" if stream_id else ""
         return jsonify({
-            "id": stream_id
+            "stream_url": stream_url,
+            "id": stream_id,
+            "error": data.get("error", "")
         })
-
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.after_request
-def add_headers(response):
-    # Permitir contenido externo y mostrar el avatar D-ID en la página
-    response.headers['X-Frame-Options'] = 'ALLOWALL'
-    response.headers['Content-Security-Policy'] = "default-src * 'unsafe-inline' 'unsafe-eval'; frame-src *; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src *; img-src * data:; style-src * 'unsafe-inline';"
-    return response
+if __name__ == '__main__':
+    app.run(debug=True)
