@@ -2,37 +2,20 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AlmostMe - Clon Parlante Streaming</title>
+  <title>AlmostMe Streaming D-ID</title>
   <style>
-    body {
-      font-family: sans-serif;
-      padding: 2rem;
-      background: #f2f2f2;
-    }
-    button {
-      padding: 0.6rem 1.2rem;
-      font-size: 1rem;
-    }
-    #output {
-      margin-top: 1rem;
-      max-width: 500px;
-    }
-    video {
-      margin-top: 1rem;
-      width: 100%;
-      max-width: 500px;
-      border-radius: 12px;
-      background: #000;
-    }
+    body { font-family: Arial, sans-serif; padding: 2rem; background: #f9f9f9; }
+    button { padding: 10px 20px; font-size: 1rem; cursor: pointer; }
+    #output { margin-top: 1rem; font-weight: bold; }
+    video { margin-top: 1rem; width: 100%; max-width: 600px; border-radius: 8px; background: black; }
   </style>
 </head>
 <body>
-  <h1>Clon Parlante Streaming con D-ID</h1>
-  <button id="start-btn">Hablar</button>
-  <div id="output">Esperando...</div>
-  <video id="talk-video" autoplay playsinline></video>
+  <h1>Clon Parlante Streaming WebRTC con D-ID</h1>
+  <button id="start-btn">Iniciar Streaming</button>
+  <div id="output">Presiona el botón para comenzar.</div>
+  <video id="talk-video" autoplay playsinline controls></video>
 
-  <script type="module" src="/static/script.js"></script>
+  <script src="/static/script.js"></script>
 </body>
 </html>
