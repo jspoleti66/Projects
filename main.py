@@ -1,68 +1,58 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 import requests
+import os
+import time
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static')
 
-# Reemplaza con tu clave de API de D-ID
-D_ID_API_KEY = "WTJWallYSnlhWHB2WjBCbmJXRnBiQzVqYjIwOml6bTZaaEIzd29rQy1xUHBaVFlXSg=="
-API_URL = "https://api.d-id.com/talks"
+DID_API_KEY = os.getenv("DID_API_KEY")  # Asegurate de setear esto en Render
+DID_BASE_URL = "https://api.d-id.com/talks"
 
-@app.route('/')
-def home():
-    return render_template('index.html')
+headers = {
+    "Authorization": f"Basic {DID_API_KEY}",
+    "Content-Type": "application/json"
+}
 
-@app.route('/start-talk', methods=['POST'])
+# Imagen pública y texto demo
+IMAGE_URL = "https://i.imgur.com/YOUR_IMAGE.jpg"  # Cambiar por tu imagen
+DEFAULT_TEXT = "Hola, soy tu clon digital. ¿En qué puedo ayudarte?"
+
+@app.route("/")
+def index():
+    return send_from_directory(".", "index.html")
+
+@app.route("/start-talk", methods=["POST"])
 def start_talk():
     payload = {
-        "source_url": "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png",
+        "source_url": IMAGE_URL,
         "script": {
             "type": "text",
-            "input": "Hola, soy tu clon parlante generado con D-ID."
+            "input": DEFAULT_TEXT,
+            "provider": {
+                "type": "microsoft",
+                "voice_id": "es-ES-AlvaroNeural"
+            }
         }
     }
 
-    headers = {
-        "Authorization": f"Basic {D_ID_API_KEY}",
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-    }
+    response = requests.post(DID_BASE_URL, headers=headers, json=payload)
 
-    try:
-        response = requests.post(API_URL, json=payload, headers=headers)
-        response.raise_for_status()
-        data = response.json()
-        talk_id = data.get("id", "")
-        return jsonify({"talk_id": talk_id})
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": str(e)}), 500
+    if response.status_code == 201:
+        return jsonify(response.json())
+    else:
+        return jsonify({"error": "Error al iniciar el video", "details": response.text}), 500
 
-@app.route('/get-talk/<talk_id>', methods=['GET'])
-def get_talk(talk_id):
-    headers = {
-        "Authorization": f"Basic {D_ID_API_KEY}",
-        "Accept": "application/json"
-    }
+@app.route("/check-status/<talk_id>")
+def check_status(talk_id):
+    status_url = f"{DID_BASE_URL}/{talk_id}"
+    response = requests.get(status_url, headers=headers)
 
-    try:
-        response = requests.get(f"{API_URL}/{talk_id}", headers=headers)
-        response.raise_for_status()
-        data = response.json()
-        return jsonify(data)
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": str(e)}), 500
+    if response.status_code == 200:
+        return jsonify(response.json())
+    else:
+        return jsonify({"error": "No se pudo consultar el estado", "details": response.text}), 500
 
-@app.after_request
-def add_headers(response):
-    response.headers['X-Frame-Options'] = 'ALLOWALL'
-    response.headers['Content-Security-Policy'] = (
-        "default-src *; "
-        "frame-src *; "
-        "script-src * 'unsafe-inline'; "
-        "style-src * 'unsafe-inline'; "
-        "connect-src *; "
-        "img-src *;"
-    )
-    return response
-
-if __name__ == '__main__':
-    app.run(debug=True)
+# Permitir favicon (opcional)
+@app.route("/favicon.ico")
+def favicon():
+    return "", 204
