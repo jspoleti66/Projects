@@ -35,13 +35,13 @@ def start_stream():
         return jsonify({
             "id": stream_id
         })
-    
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @app.after_request
 def add_headers(response):
-    # Permitir que otros dominios (como D-ID) se muestren en iframes
+    # Permitir contenido externo y mostrar el avatar D-ID en la página
     response.headers['X-Frame-Options'] = 'ALLOWALL'
-    response.headers['Content-Security-Policy'] = "default-src *; frame-src *; script-src *; connect-src *; img-src *; style-src *"
+    response.headers['Content-Security-Policy'] = "default-src * 'unsafe-inline' 'unsafe-eval'; frame-src *; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src *; img-src * data:; style-src * 'unsafe-inline';"
     return response
