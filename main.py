@@ -23,7 +23,7 @@ def start_stream():
     }
 
     payload = {
-        "source_url": "https://i.imgur.com/yVX4S5G.png",  # Cambiá esta URL por tu imagen si querés
+        "source_url": "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png",  # Cambiá esta URL por tu imagen si querés
         "config": {
             "driver_expressions": {
                 "expressions": ["neutral"]
