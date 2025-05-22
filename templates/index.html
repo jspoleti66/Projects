@@ -2,71 +2,21 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AlmostMe con D-ID</title>
   <style>
     body { font-family: sans-serif; padding: 2rem; background: #f2f2f2; }
     button { padding: 0.6rem 1.2rem; font-size: 1rem; }
-    #output, video { margin-top: 1rem; width: 100%; max-width: 500px; }
-    video { height: auto; border: none; border-radius: 12px; }
+    #output, #video-container { margin-top: 1rem; max-width: 500px; }
+    video { width: 100%; border-radius: 12px; }
   </style>
 </head>
 <body>
   <h1>Clon Parlante con D-ID</h1>
   <button onclick="startTalk()">Hablar</button>
   <div id="output">Esperando...</div>
-  <video id="talkVideo" controls style="display:none;"></video>
+  <div id="video-container"></div>
 
-  <script>
-    async function startTalk() {
-      document.getElementById('output').textContent = "Creando video parlante...";
-      try {
-        const res = await fetch('/start-talk', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        const data = await res.json();
-
-        if (data.error) {
-          document.getElementById('output').textContent = `Error: ${data.error}`;
-          return;
-        }
-
-        const talkId = data.talk_id;
-        checkTalkStatus(talkId);
-      } catch (e) {
-        document.getElementById('output').textContent = `Error: ${e.message}`;
-      }
-    }
-
-    async function checkTalkStatus(talkId) {
-      const interval = setInterval(async () => {
-        try {
-          const res = await fetch(`/get-talk/${talkId}`);
-          const data = await res.json();
-
-          if (data.error) {
-            document.getElementById('output').textContent = `Error: ${data.error}`;
-            clearInterval(interval);
-            return;
-          }
-
-          if (data.status === 'done') {
-            clearInterval(interval);
-            document.getElementById('output').textContent = "Video generado correctamente.";
-            const video = document.getElementById('talkVideo');
-            video.src = data.result_url;
-            video.style.display = 'block';
-            video.play();
-          } else {
-            document.getElementById('output').textContent = `Estado: ${data.status}`;
-          }
-        } catch (e) {
-          document.getElementById('output').textContent = `Error: ${e.message}`;
-          clearInterval(interval);
-        }
-      }, 3000);
-    }
-  </script>
+  <script src="/static/script.js"></script>
 </body>
 </html>
