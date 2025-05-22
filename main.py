@@ -1,8 +1,9 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, request, jsonify
 import requests
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static')
 
+# Token de autenticación de D-ID (usá el tuyo real)
 D_ID_AUTH_HEADER = "WTJWallYSnlhWHB2WjBCbmJXRnBiQzVqYjIwOml6bTZaaEIzd29rQy1xUHBaVFlXSg=="
 API_URL = "https://api.d-id.com/talks/streams"
 
@@ -30,6 +31,26 @@ def start_stream():
     try:
         response = requests.post(API_URL, json=payload, headers=headers)
         data = response.json()
-        return jsonify(data)  # Devuelve el stream_id y otros datos útiles
+        stream_id = data.get("id", "")
+        stream_url = f"https://talks.d-id.com/stream/{stream_id}" if stream_id else ""
+
+        return jsonify({
+            "stream_url": stream_url,
+            "id": stream_id
+        })
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# Permitir mostrar contenido embebido (como el iframe de D-ID)
+@app.after_request
+def add_headers(response):
+    response.headers['X-Frame-Options'] = 'ALLOWALL'
+    response.headers['Content-Security-Policy'] = (
+        "default-src *; frame-src *; script-src * 'unsafe-inline'; "
+        "connect-src *; img-src * data:; style-src * 'unsafe-inline'"
+    )
+    return response
+
+if __name__ == "__main__":
+    app.run(debug=True)
