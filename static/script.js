@@ -8,7 +8,7 @@ startBtn.onclick = async () => {
   output.innerText = "Creando talk y negociando WebRTC...";
 
   try {
-    // 1. Crear talk en backend y obtener talkId
+    // 1. Crear talk y obtener talkId
     const resTalk = await fetch('/start-talk', { method: 'POST' });
     const dataTalk = await resTalk.json();
 
@@ -20,31 +20,30 @@ startBtn.onclick = async () => {
     const talkId = dataTalk.talk_id;
     output.innerText = `Talk creado con ID: ${talkId}`;
 
-    // 2. Pedir SDP offer para WebRTC
+    // 2. Obtener SDP offer
     const resOffer = await fetch(`/webrtc-offer/${talkId}`);
     const offerData = await resOffer.json();
 
     if (!offerData.sdp) {
-      output.innerText = "Error: no se recibió SDP offer";
+      output.innerText = "Error: No se recibió SDP offer";
       return;
     }
 
     // 3. Crear RTCPeerConnection
     peerConnection = new RTCPeerConnection();
 
-    // Cuando recibimos el stream remoto, asignamos al video
+    // Cuando recibimos el stream remoto, lo asignamos al video
     peerConnection.ontrack = (event) => {
       video.srcObject = event.streams[0];
     };
 
-    // Establecemos la oferta SDP recibida
     await peerConnection.setRemoteDescription(new RTCSessionDescription({type: "offer", sdp: offerData.sdp}));
 
-    // Creamos la respuesta SDP (answer)
+    // Crear y setear respuesta SDP
     const answer = await peerConnection.createAnswer();
     await peerConnection.setLocalDescription(answer);
 
-    // 4. Enviamos la respuesta SDP al backend para completar la negociación
+    // 4. Enviar respuesta al backend
     const resAnswer = await fetch(`/webrtc-answer/${talkId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -59,7 +58,7 @@ startBtn.onclick = async () => {
 
     output.innerText = "Streaming en vivo iniciado.";
 
-    // 5. Manejar candidatos ICE
+    // 5. Manejar ICE candidates
     peerConnection.onicecandidate = async (event) => {
       if (event.candidate) {
         await fetch(`/webrtc-candidate/${talkId}`, {
