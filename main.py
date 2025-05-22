@@ -30,8 +30,8 @@ def start_stream():
     try:
         response = requests.post(API_URL, json=payload, headers=headers)
         data = response.json()
-        stream_url = data.get("stream_url", "")
         stream_id = data.get("id", "")
+        stream_url = f"https://talks.d-id.com/stream/{stream_id}" if stream_id else ""
 
         return jsonify({
             "stream_url": stream_url,
@@ -43,9 +43,15 @@ def start_stream():
 
 @app.after_request
 def add_headers(response):
+    # Permitir que otros dominios (como D-ID) se muestren en iframes
     response.headers['X-Frame-Options'] = 'ALLOWALL'
-    response.headers['Content-Security-Policy'] = "default-src *; frame-src *; script-src *; connect-src *; img-src *; style-src *"
+    # CSP permitiendo estilos y scripts inline para desarrollo/testing
+    response.headers['Content-Security-Policy'] = (
+        "default-src *; "
+        "frame-src *; "
+        "script-src * 'unsafe-inline'; "
+        "style-src * 'unsafe-inline'; "
+        "connect-src *; "
+        "img-src *;"
+    )
     return response
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
