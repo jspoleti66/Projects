@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AlmostMe con D-ID</title>
   <style>
     body { font-family: sans-serif; padding: 2rem; background: #f2f2f2; }
@@ -19,21 +19,32 @@
 
   <script>
     async function startStream() {
-      document.getElementById("output").innerText = "Cargando clon parlante...";
-
+      document.getElementById('output').textContent = "Creando avatar parlante...";
       try {
-        const res = await fetch('/start-stream', { method: 'POST' });
+        const res = await fetch('/start-stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
         const data = await res.json();
 
-        if (data.stream_url) {
-          document.getElementById("streamFrame").src = data.stream_url;
-          document.getElementById("streamFrame").style.display = "block";
-          document.getElementById("output").innerText = "Listo.";
-        } else {
-          document.getElementById("output").innerText = "No se pudo iniciar el stream.";
+        if(data.error){
+          document.getElementById('output').textContent = `Error: ${data.error}`;
+          document.getElementById('streamFrame').style.display = 'none';
+          return;
         }
-      } catch (err) {
-        document.getElementById("output").innerText = "Error: " + err.message;
+
+        if(data.stream_url){
+          document.getElementById('output').textContent = "Avatar parlante cargado correctamente.";
+          const iframe = document.getElementById('streamFrame');
+          iframe.src = data.stream_url;
+          iframe.style.display = 'block';
+        } else {
+          document.getElementById('output').textContent = "No se recibió la URL del stream.";
+          document.getElementById('streamFrame').style.display = 'none';
+        }
+      } catch (e) {
+        document.getElementById('output').textContent = `Error: ${e.message}`;
+        document.getElementById('streamFrame').style.display = 'none';
       }
     }
   </script>
