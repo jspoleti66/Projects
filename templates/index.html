@@ -3,46 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Clon Parlante con D-ID</title>
-  <script src="https://unpkg.com/@d-id/web-sdk@latest/dist/index.min.js"></script>
+  <title>AlmostMe con D-ID</title>
   <style>
     body { font-family: sans-serif; padding: 2rem; background: #f2f2f2; }
     button { padding: 0.6rem 1.2rem; font-size: 1rem; }
-    #output { margin-top: 1rem; color: green; }
-    video { margin-top: 1rem; width: 100%; max-width: 500px; border-radius: 12px; }
+    #output, iframe { margin-top: 1rem; width: 100%; max-width: 500px; }
+    iframe { height: 400px; border: none; border-radius: 12px; }
   </style>
+
+  <!-- SDK de D-ID -->
+  <script src="https://websdk.d-id.com/v1.0/web-sdk.js"></script>
 </head>
 <body>
-  <h1>Clon Parlante en Streaming</h1>
+  <h1>Clon Parlante con D-ID</h1>
   <button onclick="startStream()">Hablar</button>
   <div id="output">Esperando...</div>
-  <video id="talkVideo" autoplay playsinline muted></video>
+  <iframe id="streamFrame" style="display:none;"></iframe>
 
-  <script>
-    async function startStream() {
-      document.getElementById("output").textContent = "Solicitando stream...";
-
-      try {
-        const res = await fetch("/start-stream", { method: "POST" });
-        const data = await res.json();
-
-        if (!data.id) throw new Error("No se recibió stream ID");
-
-        document.getElementById("output").textContent = "Conectando stream: " + data.id;
-
-        const talk = new DID.Talk({
-          streamId: data.id,
-          apiKey: undefined // solo necesario si no usás auth básica en backend
-        });
-
-        await talk.start(document.getElementById("talkVideo"));
-
-        document.getElementById("output").textContent = "Streaming iniciado correctamente";
-      } catch (err) {
-        console.error(err);
-        document.getElementById("output").textContent = "Error: " + err.message;
-      }
-    }
-  </script>
+  <script src="/static/script.js"></script>
 </body>
 </html>
