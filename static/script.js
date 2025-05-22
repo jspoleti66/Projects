@@ -1,21 +1,42 @@
 async function startStream() {
   const output = document.getElementById('output');
-  const iframe = document.getElementById('streamFrame');
-  output.textContent = 'Generando...';
-  iframe.style.display = 'none';
+  output.innerText = "Solicitando stream...";
 
   try {
-    const res = await fetch('/start-stream', { method: 'POST' });
+    const res = await fetch('/start-stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
     const data = await res.json();
 
-    if (res.ok && data.stream_url) {
-      output.textContent = 'Avatar parlante cargado correctamente.';
-      iframe.src = data.stream_url;
-      iframe.style.display = 'block';
-    } else {
-      output.textContent = `Error: ${JSON.stringify(data)}`;
+    if (!data.id) {
+      output.innerText = "Error: no se pudo obtener el ID del stream.";
+      console.error("Respuesta inválida del backend:", data);
+      return;
     }
-  } catch (err) {
-    output.textContent = `Error: ${err.message}`;
+
+    output.innerText = "Conectando al avatar parlante...";
+
+    // Verificamos si el SDK está cargado
+    if (!window.DId || !DId.createStream) {
+      output.innerText = "Error: SDK de D-ID no cargado.";
+      return;
+    }
+
+    const canvas = document.getElementById('avatarCanvas');
+
+    const stream = await DId.createStream({
+      streamId: data.id,
+      container: canvas
+    });
+
+    stream.play();
+
+    output.innerText = "Avatar parlante conectado con éxito.";
+
+  } catch (error) {
+    output.innerText = "Error al iniciar el stream.";
+    console.error("Error en startStream():", error);
   }
 }
