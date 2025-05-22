@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, jsonify, request
 import requests
 
 app = Flask(__name__)
@@ -30,15 +30,6 @@ def start_stream():
     try:
         response = requests.post(API_URL, json=payload, headers=headers)
         data = response.json()
-        stream_id = data.get("id", "")
-        stream_url = f"https://talks.d-id.com/stream/{stream_id}" if stream_id else ""
-        return jsonify({
-            "stream_url": stream_url,
-            "id": stream_id,
-            "error": data.get("error", "")
-        })
+        return jsonify(data)  # Devuelve el stream_id y otros datos útiles
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-if __name__ == '__main__':
-    app.run(debug=True)
