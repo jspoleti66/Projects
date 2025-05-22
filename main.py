@@ -4,7 +4,7 @@ import requests
 app = Flask(__name__)
 
 # Reemplaza con tu clave de API de D-ID
-D_ID_API_KEY = "Y2VjYXJyaXpvZ0BnbWFpbC5jb20:T8blqywKs5-5ky13iUJtg"
+D_ID_API_KEY = "WTJWallYSnlhWHB2WjBCbmJXRnBiQzVqYjIwOml6bTZaaEIzd29rQy1xUHBaVFlXSg=="
 API_URL = "https://api.d-id.com/talks"
 
 @app.route('/')
