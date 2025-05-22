@@ -1,49 +1,49 @@
+const videoElement = document.getElementById("talking-video");
+
 async function startStream() {
-    const response = await fetch("/start-stream", { method: "POST" });
-    const data = await response.json();
-    const streamId = data.stream_id;
+  const response = await fetch("/create_stream", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text: "Hola, soy tu clon interactivo AlmostMe" }),
+  });
 
-    if (!streamId) {
-        console.error("Error al iniciar el stream:", data);
-        return;
+  if (!response.ok) {
+    alert("Error al iniciar el stream");
+    return;
+  }
+
+  const data = await response.json();
+  const { streamId, offer, iceServers, sessionId } = data;
+
+  const peerConnection = new RTCPeerConnection({ iceServers });
+
+  peerConnection.ontrack = (event) => {
+    videoElement.srcObject = event.streams[0];
+  };
+
+  peerConnection.onicecandidate = async (event) => {
+    if (event.candidate) {
+      await fetch(`https://api.d-id.com/streams/${streamId}/ice`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer <YOUR_DID_API_KEY>",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ candidate: event.candidate }),
+      });
     }
+  };
 
-    const socket = new WebSocket(`wss://api.d-id.com/streams/${streamId}`);
+  await peerConnection.setRemoteDescription(offer);
+  const answer = await peerConnection.createAnswer();
+  await peerConnection.setLocalDescription(answer);
 
-    const pc = new RTCPeerConnection();
-
-    pc.ontrack = (event) => {
-        const video = document.getElementById("talk-video");
-        video.srcObject = event.streams[0];
-    };
-
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-
-    socket.onopen = () => {
-        socket.send(JSON.stringify({ type: "offer", sdp: offer.sdp }));
-    };
-
-    socket.onmessage = async (event) => {
-        const message = JSON.parse(event.data);
-
-        if (message.type === "answer") {
-            const remoteDesc = new RTCSessionDescription({ type: "answer", sdp: message.sdp });
-            await pc.setRemoteDescription(remoteDesc);
-        }
-
-        if (message.candidate) {
-            try {
-                await pc.addIceCandidate(message);
-            } catch (e) {
-                console.error("Error al agregar candidato ICE", e);
-            }
-        }
-    };
-
-    pc.onicecandidate = (event) => {
-        if (event.candidate) {
-            socket.send(JSON.stringify({ type: "candidate", candidate: event.candidate }));
-        }
-    };
+  await fetch(`https://api.d-id.com/streams/${streamId}/sdp`, {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer <YOUR_DID_API_KEY>",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ answer }),
+  });
 }
