@@ -1,3 +1,5 @@
+import { DID } from "https://cdn.jsdelivr.net/npm/@d-id/talks-sdk@latest/dist/talks.min.js";
+
 async function startStream() {
   const output = document.getElementById('output');
   const videoElement = document.getElementById('talk-video');
@@ -17,8 +19,6 @@ async function startStream() {
     const session = await DID.createTalkStream({ streamId, videoElement });
 
     output.innerText = "Streaming iniciado correctamente.";
-
-    // Puedes guardar session si querés luego controlarlo (detener, mutear, etc.)
   } catch (err) {
     output.innerText = "Error: " + err.message;
   }
