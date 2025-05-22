@@ -8,7 +8,7 @@ app = Flask(__name__)
 D_ID_API_KEY = os.getenv("D_ID_API_KEY")
 TALK_IMAGE_URL = os.getenv("TALK_IMAGE_URL")
 VOICE_ID = os.getenv("VOICE_ID", "en-US-Wavenet-F")
-SOURCE_IMAGE_URL = TALK_IMAGE_URL or "https://i.imgur.com/your_image.jpg"
+SOURCE_IMAGE_URL = TALK_IMAGE_URL or "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png"
 
 headers = {
     "Authorization": f"Bearer {D_ID_API_KEY}",
