@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AlmostMe con D-ID Streaming</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AlmostMe - Clon Parlante Streaming</title>
   <style>
     body {
       font-family: sans-serif;
@@ -22,19 +22,17 @@
       margin-top: 1rem;
       width: 100%;
       max-width: 500px;
-      height: auto;
       border-radius: 12px;
       background: #000;
     }
   </style>
 </head>
 <body>
-  <h1>Clon Parlante en Streaming con D-ID</h1>
-  <button onclick="startStream()">Hablar</button>
+  <h1>Clon Parlante Streaming con D-ID</h1>
+  <button id="start-btn">Hablar</button>
   <div id="output">Esperando...</div>
-  <video id="talk-video" autoplay muted playsinline></video>
+  <video id="talk-video" autoplay playsinline></video>
 
-  <!-- Carga el script principal como módulo -->
   <script type="module" src="/static/script.js"></script>
 </body>
 </html>
