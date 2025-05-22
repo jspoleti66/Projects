@@ -30,9 +30,13 @@ def start_stream():
     try:
         response = requests.post(API_URL, json=payload, headers=headers)
         data = response.json()
+        stream_id = data.get("id", "")
+        stream_url = f"https://talks.d-id.com/stream/{stream_id}" if stream_id else ""
+     
         return jsonify({
-            "stream_url": data.get("stream_url", ""),
-            "id": data.get("id", "")
+            "stream_url": stream_url,
+            "id": stream_id
         })
+    
     except Exception as e:
         return jsonify({"error": str(e)}), 500
