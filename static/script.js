@@ -1,46 +1,25 @@
-async function startTalk() {
-  document.getElementById('output').innerText = "Solicitando video...";
-  document.getElementById('video-container').innerHTML = "";
+async function startStream() {
+  const output = document.getElementById('output');
+  const videoElement = document.getElementById('talk-video');
+
+  output.innerText = "Iniciando streaming...";
 
   try {
-    const response = await fetch('/start-talk', {
-      method: 'POST',
-    });
+    const res = await fetch('/start-stream', { method: 'POST' });
+    const data = await res.json();
 
-    const data = await response.json();
     if (!data.id) {
-      document.getElementById('output').innerText = "Error: " + JSON.stringify(data);
+      output.innerText = "Error al crear el stream: " + JSON.stringify(data);
       return;
     }
 
-    const talkId = data.id;
+    const streamId = data.id;
+    const session = await DID.createTalkStream({ streamId, videoElement });
 
-    const interval = setInterval(async () => {
-      const statusResponse = await fetch(`/check-status/${talkId}`);
-      const statusData = await statusResponse.json();
+    output.innerText = "Streaming iniciado correctamente.";
 
-      if (statusData.status === 'done') {
-        clearInterval(interval);
-        document.getElementById('output').innerText = "Video listo.";
-
-        const video = document.createElement("video");
-        video.src = statusData.result_url;
-        video.controls = true;
-        video.autoplay = true;
-        video.style.maxWidth = "100%";
-
-        const container = document.getElementById("video-container");
-        container.innerHTML = "";
-        container.appendChild(video);
-      } else if (statusData.status === 'error') {
-        clearInterval(interval);
-        document.getElementById('output').innerText = "Error al generar el video.";
-      } else {
-        document.getElementById('output').innerText = "Procesando...";
-      }
-    }, 2000);
-
+    // Puedes guardar session si querés luego controlarlo (detener, mutear, etc.)
   } catch (err) {
-    document.getElementById('output').innerText = "Error: " + err.message;
+    output.innerText = "Error: " + err.message;
   }
 }
