@@ -1,75 +1,49 @@
-const startBtn = document.getElementById("start-btn");
-const output = document.getElementById("output");
-const video = document.getElementById("talk-video");
+const startBtn = document.getElementById('startBtn');
+const output = document.getElementById('output');
+const remoteVideo = document.getElementById('remoteVideo');
 
-let peerConnection;
+let pc;
 
 startBtn.onclick = async () => {
-  output.innerText = "Creando talk y negociando WebRTC...";
+  output.innerText = "Inicializando...";
+  const res = await fetch('/start-stream', { method: 'POST' });
+  const data = await res.json();
 
-  try {
-    // 1. Crear talk y obtener talkId
-    const resTalk = await fetch('/start-talk', { method: 'POST' });
-    const dataTalk = await resTalk.json();
+  if (!data.talk_id) {
+    output.innerText = "Error al crear stream: " + JSON.stringify(data);
+    return;
+  }
 
-    if (dataTalk.error) {
-      output.innerText = "Error: " + dataTalk.error;
-      return;
-    }
+  const talkId = data.talk_id;
+  output.innerText = "Streaming iniciado. Negociando conexión...";
 
-    const talkId = dataTalk.talk_id;
-    output.innerText = `Talk creado con ID: ${talkId}`;
+  pc = new RTCPeerConnection();
 
-    // 2. Obtener SDP offer
-    const resOffer = await fetch(`/webrtc-offer/${talkId}`);
-    const offerData = await resOffer.json();
+  pc.ontrack = (event) => {
+    remoteVideo.srcObject = event.streams[0];
+  };
 
-    if (!offerData.sdp) {
-      output.innerText = "Error: No se recibió SDP offer";
-      return;
-    }
+  pc.onicecandidate = async (event) => {
+    if (event.candidate) return;
 
-    // 3. Crear RTCPeerConnection
-    peerConnection = new RTCPeerConnection();
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
 
-    // Cuando recibimos el stream remoto, lo asignamos al video
-    peerConnection.ontrack = (event) => {
-      video.srcObject = event.streams[0];
-    };
-
-    await peerConnection.setRemoteDescription(new RTCSessionDescription({type: "offer", sdp: offerData.sdp}));
-
-    // Crear y setear respuesta SDP
-    const answer = await peerConnection.createAnswer();
-    await peerConnection.setLocalDescription(answer);
-
-    // 4. Enviar respuesta al backend
-    const resAnswer = await fetch(`/webrtc-answer/${talkId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sdp: peerConnection.localDescription.sdp }),
+    const res = await fetch(`/webrtc-offer/${talkId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sdp: offer.sdp })
     });
 
-    const answerResult = await resAnswer.json();
-    if (answerResult.error) {
-      output.innerText = "Error al enviar respuesta SDP: " + answerResult.error;
+    const data = await res.json();
+    if (!data.sdp) {
+      output.innerText = "Error: No se recibió SDP answer";
       return;
     }
 
-    output.innerText = "Streaming en vivo iniciado.";
+    await pc.setRemoteDescription({ type: 'answer', sdp: data.sdp });
+    output.innerText = "Conexión establecida.";
+  };
 
-    // 5. Manejar ICE candidates
-    peerConnection.onicecandidate = async (event) => {
-      if (event.candidate) {
-        await fetch(`/webrtc-candidate/${talkId}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ candidate: event.candidate }),
-        });
-      }
-    };
-
-  } catch (error) {
-    output.innerText = "Error: " + error.message;
-  }
+  pc.addTransceiver('video', { direction: 'recvonly' });
 };
