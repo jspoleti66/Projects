@@ -13,18 +13,18 @@ def home():
 @app.route('/start-stream', methods=['POST'])
 def start_stream():
     payload = {
-    "source_url": "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png",
-    "driver_url": "bank://lively",
-    "script": {
-        "type": "text",
-        "input": "Hola, soy tu clon parlante generado con D-ID."
+        "source_url": "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png",
+        "driver_url": "bank://lively",
+        "script": {
+            "type": "text",
+            "input": "Hola, soy tu clon parlante generado con D-ID."
         }
     }
 
     headers = {
-    "Authorization": f"Basic {D_ID_AUTH_HEADER}",
-    "Content-Type": "application/json",
-    "Accept": "application/json"
+        "Authorization": f"Basic {D_ID_AUTH_HEADER}",
+        "Content-Type": "application/json",
+        "Accept": "application/json"
     }
 
     try:
@@ -32,18 +32,25 @@ def start_stream():
         data = response.json()
         stream_id = data.get("id", "")
         stream_url = f"https://talks.d-id.com/stream/{stream_id}" if stream_id else ""
-     
+
         return jsonify({
             "stream_url": stream_url,
             "id": stream_id
         })
-    
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @app.after_request
 def add_headers(response):
-    # Permitir que otros dominios (como D-ID) se muestren en iframes
+    # Habilita contenido externo como D-ID (streaming WebRTC, iframes, scripts, etc.)
     response.headers['X-Frame-Options'] = 'ALLOWALL'
-    response.headers['Content-Security-Policy'] = "default-src *; frame-src *; script-src *; connect-src *; img-src *; style-src *"
+    response.headers['Content-Security-Policy'] = (
+        "default-src * data: blob:; "
+        "frame-src * data: blob:; "
+        "script-src * 'unsafe-inline' 'unsafe-eval' data: blob:; "
+        "connect-src * data: blob:; "
+        "img-src * data: blob:; "
+        "style-src * 'unsafe-inline' data: blob:;"
+    )
     return response
