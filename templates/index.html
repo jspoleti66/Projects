@@ -7,45 +7,65 @@
   <style>
     body { font-family: sans-serif; padding: 2rem; background: #f2f2f2; }
     button { padding: 0.6rem 1.2rem; font-size: 1rem; }
-    #output, iframe { margin-top: 1rem; width: 100%; max-width: 500px; }
-    iframe { height: 400px; border: none; border-radius: 12px; }
+    #output, video { margin-top: 1rem; width: 100%; max-width: 500px; }
+    video { height: auto; border: none; border-radius: 12px; }
   </style>
 </head>
 <body>
   <h1>Clon Parlante con D-ID</h1>
-  <button onclick="startStream()">Hablar</button>
+  <button onclick="startTalk()">Hablar</button>
   <div id="output">Esperando...</div>
-  <iframe id="streamFrame" style="display:none;"></iframe>
+  <video id="talkVideo" controls style="display:none;"></video>
 
   <script>
-    async function startStream() {
-      document.getElementById('output').textContent = "Creando avatar parlante...";
+    async function startTalk() {
+      document.getElementById('output').textContent = "Creando video parlante...";
       try {
-        const res = await fetch('/start-stream', {
+        const res = await fetch('/start-talk', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         });
         const data = await res.json();
 
-        if(data.error){
+        if (data.error) {
           document.getElementById('output').textContent = `Error: ${data.error}`;
-          document.getElementById('streamFrame').style.display = 'none';
           return;
         }
 
-        if(data.stream_url){
-          document.getElementById('output').textContent = "Avatar parlante cargado correctamente.";
-          const iframe = document.getElementById('streamFrame');
-          iframe.src = data.stream_url;
-          iframe.style.display = 'block';
-        } else {
-          document.getElementById('output').textContent = "No se recibió la URL del stream.";
-          document.getElementById('streamFrame').style.display = 'none';
-        }
+        const talkId = data.talk_id;
+        checkTalkStatus(talkId);
       } catch (e) {
         document.getElementById('output').textContent = `Error: ${e.message}`;
-        document.getElementById('streamFrame').style.display = 'none';
       }
+    }
+
+    async function checkTalkStatus(talkId) {
+      const interval = setInterval(async () => {
+        try {
+          const res = await fetch(`/get-talk/${talkId}`);
+          const data = await res.json();
+
+          if (data.error) {
+            document.getElementById('output').textContent = `Error: ${data.error}`;
+            clearInterval(interval);
+            return;
+          }
+
+          if (data.status === 'done') {
+            clearInterval(interval);
+            document.getElementById('output').textContent = "Video generado correctamente.";
+            const video = document.getElementById('talkVideo');
+            video.src = data.result_url;
+            video.style.display = 'block';
+            video.play();
+          } else {
+            document.getElementById('output').textContent = `Estado: ${data.status}`;
+          }
+        } catch (e) {
+          document.getElementById('output').textContent = `Error: ${e.message}`;
+          clearInterval(interval);
+        }
+      }, 3000);
     }
   </script>
 </body>
