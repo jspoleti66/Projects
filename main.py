@@ -31,26 +31,17 @@ def start_stream():
         response = requests.post(API_URL, json=payload, headers=headers)
         data = response.json()
         stream_id = data.get("id", "")
-        stream_url = f"https://talks.d-id.com/stream/{stream_id}" if stream_id else ""
 
         return jsonify({
-            "stream_url": stream_url,
             "id": stream_id
         })
-
+    
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @app.after_request
 def add_headers(response):
-    # Habilita contenido externo como D-ID (streaming WebRTC, iframes, scripts, etc.)
+    # Permitir que otros dominios (como D-ID) se muestren en iframes
     response.headers['X-Frame-Options'] = 'ALLOWALL'
-    response.headers['Content-Security-Policy'] = (
-        "default-src * data: blob:; "
-        "frame-src * data: blob:; "
-        "script-src * 'unsafe-inline' 'unsafe-eval' data: blob:; "
-        "connect-src * data: blob:; "
-        "img-src * data: blob:; "
-        "style-src * 'unsafe-inline' data: blob:;"
-    )
+    response.headers['Content-Security-Policy'] = "default-src *; frame-src *; script-src *; connect-src *; img-src *; style-src *"
     return response
