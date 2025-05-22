@@ -2,46 +2,47 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AlmostMe con D-ID</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Clon Parlante con D-ID</title>
+  <script src="https://unpkg.com/@d-id/web-sdk@latest/dist/index.min.js"></script>
   <style>
     body { font-family: sans-serif; padding: 2rem; background: #f2f2f2; }
     button { padding: 0.6rem 1.2rem; font-size: 1rem; }
-    #output, iframe { margin-top: 1rem; width: 100%; max-width: 500px; }
-    iframe { height: 400px; border: none; border-radius: 12px; display: none; }
+    #output { margin-top: 1rem; color: green; }
+    video { margin-top: 1rem; width: 100%; max-width: 500px; border-radius: 12px; }
   </style>
 </head>
 <body>
-  <h1>Clon Parlante con D-ID</h1>
-  <button id="startBtn">Hablar</button>
+  <h1>Clon Parlante en Streaming</h1>
+  <button onclick="startStream()">Hablar</button>
   <div id="output">Esperando...</div>
-  <iframe id="streamFrame"></iframe>
+  <video id="talkVideo" autoplay playsinline muted></video>
 
   <script>
-    const btn = document.getElementById('startBtn');
-    const output = document.getElementById('output');
-    const iframe = document.getElementById('streamFrame');
+    async function startStream() {
+      document.getElementById("output").textContent = "Solicitando stream...";
 
-    btn.addEventListener('click', () => {
-      output.textContent = 'Generando avatar parlante...';
-      iframe.style.display = 'none';
-      iframe.src = '';
+      try {
+        const res = await fetch("/start-stream", { method: "POST" });
+        const data = await res.json();
 
-      fetch('/start-stream', { method: 'POST' })
-        .then(res => res.json())
-        .then(data => {
-          if (data.stream_url) {
-            iframe.src = data.stream_url;
-            iframe.style.display = 'block';
-            output.textContent = 'Avatar parlante cargado correctamente.';
-          } else {
-            output.textContent = 'Error al generar el avatar: ' + (data.error || 'Respuesta inesperada.');
-          }
-        })
-        .catch(err => {
-          output.textContent = 'Error de conexión: ' + err.message;
+        if (!data.id) throw new Error("No se recibió stream ID");
+
+        document.getElementById("output").textContent = "Conectando stream: " + data.id;
+
+        const talk = new DID.Talk({
+          streamId: data.id,
+          apiKey: undefined // solo necesario si no usás auth básica en backend
         });
-    });
+
+        await talk.start(document.getElementById("talkVideo"));
+
+        document.getElementById("output").textContent = "Streaming iniciado correctamente";
+      } catch (err) {
+        console.error(err);
+        document.getElementById("output").textContent = "Error: " + err.message;
+      }
+    }
   </script>
 </body>
 </html>
