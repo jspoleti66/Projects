@@ -1,4 +1,3 @@
-```python
 from flask import Flask, request, jsonify, send_from_directory
 import requests
 import time
@@ -76,4 +75,3 @@ def serve_script():
 
 if __name__ == "__main__":
     app.run(debug=True)
-```
