@@ -10,9 +10,6 @@
     #output, iframe { margin-top: 1rem; width: 100%; max-width: 500px; }
     iframe { height: 400px; border: none; border-radius: 12px; }
   </style>
-
-  <!-- SDK de D-ID -->
-  <script src="https://websdk.d-id.com/v1.0/web-sdk.js"></script>
 </head>
 <body>
   <h1>Clon Parlante con D-ID</h1>
@@ -20,6 +17,25 @@
   <div id="output">Esperando...</div>
   <iframe id="streamFrame" style="display:none;"></iframe>
 
-  <script src="/static/script.js"></script>
+  <script>
+    async function startStream() {
+      document.getElementById("output").innerText = "Cargando clon parlante...";
+
+      try {
+        const res = await fetch('/start-stream', { method: 'POST' });
+        const data = await res.json();
+
+        if (data.stream_url) {
+          document.getElementById("streamFrame").src = data.stream_url;
+          document.getElementById("streamFrame").style.display = "block";
+          document.getElementById("output").innerText = "Listo.";
+        } else {
+          document.getElementById("output").innerText = "No se pudo iniciar el stream.";
+        }
+      } catch (err) {
+        document.getElementById("output").innerText = "Error: " + err.message;
+      }
+    }
+  </script>
 </body>
 </html>
