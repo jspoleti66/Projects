@@ -1,42 +1,28 @@
 async function startStream() {
-  const output = document.getElementById('output');
-  output.innerText = "Solicitando stream...";
+  if (typeof DID === 'undefined') {
+    document.getElementById('output').innerText = "Error: SDK de D-ID no cargado.";
+    return;
+  }
 
   try {
-    const res = await fetch('/start-stream', {
+    const response = await fetch('/start-stream', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
     });
 
-    const data = await res.json();
+    const data = await response.json();
+    const streamUrl = data.stream_url;
 
-    if (!data.id) {
-      output.innerText = "Error: no se pudo obtener el ID del stream.";
-      console.error("Respuesta inválida del backend:", data);
+    if (!streamUrl) {
+      document.getElementById('output').innerText = "Error: " + JSON.stringify(data);
       return;
     }
 
-    output.innerText = "Conectando al avatar parlante...";
+    document.getElementById('output').innerText = "Avatar parlante cargado correctamente.";
+    const iframe = document.getElementById('streamFrame');
+    iframe.style.display = "block";
+    iframe.src = streamUrl;
 
-    // Verificamos si el SDK está cargado
-    if (!window.DId || !DId.createStream) {
-      output.innerText = "Error: SDK de D-ID no cargado.";
-      return;
-    }
-
-    const canvas = document.getElementById('avatarCanvas');
-
-    const stream = await DId.createStream({
-      streamId: data.id,
-      container: canvas
-    });
-
-    stream.play();
-
-    output.innerText = "Avatar parlante conectado con éxito.";
-
-  } catch (error) {
-    output.innerText = "Error al iniciar el stream.";
-    console.error("Error en startStream():", error);
+  } catch (err) {
+    document.getElementById('output').innerText = "Error: " + err.message;
   }
 }
