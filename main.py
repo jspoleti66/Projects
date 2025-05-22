@@ -4,7 +4,7 @@ import requests
 app = Flask(__name__)
 
 # Cambia este por tu API Key D-ID base64 "Basic xxx"
-D_ID_AUTH_HEADER = "Basic TU_API_KEY_AQUI"
+D_ID_AUTH_HEADER = "Basic WTJWallYSnlhWHB2WjBCbmJXRnBiQzVqYjIwOml6bTZaaEIzd29rQy1xUHBaVFlXSg=="
 
 HEADERS = {
     "Authorization": D_ID_AUTH_HEADER,
