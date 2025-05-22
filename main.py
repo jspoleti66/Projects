@@ -11,12 +11,6 @@ CORS(app)
 
 HISTORY = []
 
-# Cargar archivos de contexto (opcional)
-CONTEXT = ""
-for filename in os.listdir("data"):
-    with open(os.path.join("data", filename), "r", encoding="utf-8") as f:
-        CONTEXT += f.read() + "\n"
-
 @app.route("/")
 def index():
     return render_template("index.html")
