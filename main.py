@@ -1,44 +1,93 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, send_from_directory
 import requests
 import os
-import base64
 
-app = Flask(__name__, static_folder="static", template_folder="templates")
+from dotenv import load_dotenv
+load_dotenv()
+
+app = Flask(__name__)
+DID_API_KEY = os.getenv("DID_API_KEY")  # clave segura
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return send_from_directory(".", "index.html")
 
-@app.route("/start-stream", methods=["POST"])
-def start_stream():
-    api_key = os.getenv("DID_API_KEY")
-    if not api_key:
-        return jsonify({"error": "DID_API_KEY no está configurada"}), 500
+@app.route("/script.js")
+def script():
+    return send_from_directory(".", "script.js")
 
-    auth_header = base64.b64encode(f"{api_key}:".encode()).decode()
+@app.route("/create_stream", methods=["POST"])
+def create_stream():
+    user_text = request.json.get("text", "Hola, soy tu clon AlmostMe")
 
     headers = {
-        "Authorization": f"Basic {auth_header}",
+        "Authorization": f"Bearer {DID_API_KEY}",
         "Content-Type": "application/json"
     }
 
-    payload = {
-        "source_url": "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png",  # Cambiá esta URL por tu imagen si querés
+    body = {
+        "source_url": "https://i.imgur.com/YOUR_IMAGE.jpg",
         "config": {
+            "stitch": True,
             "driver_expressions": {
-                "expressions": ["neutral"]
+                "expressions": [
+                    {"expression": "happy", "start_frame": 0, "intensity": 0.4}
+                ]
             },
-            "align_driver": True
+        },
+        "script": {
+            "type": "text",
+            "input": user_text,
+            "provider": {"type": "microsoft", "voice_id": "es-ES-AlvaroNeural"},
+            "ssml": False
         }
     }
 
-    response = requests.post("https://api.d-id.com/talks/streams", json=payload, headers=headers)
+    response = requests.post("https://api.d-id.com/talks/streams", headers=headers, json=body)
+    data = response.json()
 
-    if response.status_code == 200:
-        return jsonify(response.json())
-    else:
-        return jsonify({"error": response.text}), 500
+    stream_id = data.get("id")
+    sdp_offer = data.get("offer")
+    ice_servers = data.get("ice_servers")
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    return jsonify({
+        "streamId": stream_id,
+        "sdp": sdp_offer,
+        "iceServers": ice_servers,
+    })
+
+@app.route("/send_sdp_answer", methods=["POST"])
+def send_sdp_answer():
+    stream_id = request.json.get("streamId")
+    answer = request.json.get("answer")
+
+    headers = {
+        "Authorization": f"Bearer {DID_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    requests.post(
+        f"https://api.d-id.com/streams/{stream_id}/sdp",
+        headers=headers,
+        json={"answer": answer}
+    )
+
+    return jsonify({"status": "ok"})
+
+@app.route("/send_ice_candidate", methods=["POST"])
+def send_ice_candidate():
+    stream_id = request.json.get("streamId")
+    candidate = request.json.get("candidate")
+
+    headers = {
+        "Authorization": f"Bearer {DID_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    requests.post(
+        f"https://api.d-id.com/streams/{stream_id}/ice",
+        headers=headers,
+        json={"candidate": candidate}
+    )
+
+    return jsonify({"status": "ok"})
