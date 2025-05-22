@@ -13,7 +13,7 @@ async function startStream() {
   }
 
   const data = await response.json();
-  const { sdp, streamId, iceServers } = data;
+  const { streamId, offer, iceServers, sessionId } = data;
 
   const peerConnection = new RTCPeerConnection({ iceServers });
 
@@ -23,28 +23,27 @@ async function startStream() {
 
   peerConnection.onicecandidate = async (event) => {
     if (event.candidate) {
-      await fetch(`/send_ice_candidate`, {
+      await fetch(`https://api.d-id.com/streams/${streamId}/ice`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          streamId: streamId,
-          candidate: event.candidate,
-        }),
+        headers: {
+          Authorization: "Bearer <YOUR_DID_API_KEY>",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ candidate: event.candidate }),
       });
     }
   };
 
-  await peerConnection.setRemoteDescription(sdp);
+  await peerConnection.setRemoteDescription(offer);
   const answer = await peerConnection.createAnswer();
   await peerConnection.setLocalDescription(answer);
 
-  await fetch(`/send_sdp_answer`, {
+  await fetch(`https://api.d-id.com/streams/${streamId}/sdp`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      streamId: streamId,
-      answer: peerConnection.localDescription,
-    }),
+    headers: {
+      Authorization: "Bearer <YOUR_DID_API_KEY>",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ answer }),
   });
 }
-
