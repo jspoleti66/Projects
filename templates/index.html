@@ -3,19 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AlmostMe con D-ID</title>
+  <title>AlmostMe - Clon Parlante</title>
   <style>
     body { font-family: sans-serif; padding: 2rem; background: #f2f2f2; }
     button { padding: 0.6rem 1.2rem; font-size: 1rem; }
-    #output, #video-container { margin-top: 1rem; max-width: 500px; }
-    video { width: 100%; border-radius: 12px; }
+    #output { margin-top: 1rem; }
+    video { margin-top: 1rem; width: 100%; max-width: 500px; border-radius: 12px; }
   </style>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@d-id/talks-sdk@latest/dist/talks.min.js"></script>
 </head>
 <body>
-  <h1>Clon Parlante con D-ID</h1>
-  <button onclick="startTalk()">Hablar</button>
+  <h1>Clon Parlante en Streaming</h1>
+  <button onclick="startStream()">Hablar</button>
   <div id="output">Esperando...</div>
-  <div id="video-container"></div>
+  <video id="talk-video" autoplay playsinline></video>
 
   <script src="/static/script.js"></script>
 </body>
