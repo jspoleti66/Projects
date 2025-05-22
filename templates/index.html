@@ -2,23 +2,46 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AlmostMe con D-ID</title>
   <style>
     body { font-family: sans-serif; padding: 2rem; background: #f2f2f2; }
     button { padding: 0.6rem 1.2rem; font-size: 1rem; }
-    #output { margin-top: 1rem; }
-    canvas { margin-top: 1rem; width: 100%; max-width: 500px; height: 400px; border-radius: 12px; background: black; }
+    #output, iframe { margin-top: 1rem; width: 100%; max-width: 500px; }
+    iframe { height: 400px; border: none; border-radius: 12px; display: none; }
   </style>
 </head>
 <body>
   <h1>Clon Parlante con D-ID</h1>
-  <button onclick="startStream()">Hablar</button>
+  <button id="startBtn">Hablar</button>
   <div id="output">Esperando...</div>
-  <canvas id="avatarCanvas"></canvas>
+  <iframe id="streamFrame"></iframe>
 
-  <!-- SDK de D-ID + script propio -->
-  <script src="https://unpkg.com/@d-id/web-sdk@latest/dist/index.min.js"></script>
-  <script src="/static/script.js"></script>
+  <script>
+    const btn = document.getElementById('startBtn');
+    const output = document.getElementById('output');
+    const iframe = document.getElementById('streamFrame');
+
+    btn.addEventListener('click', () => {
+      output.textContent = 'Generando avatar parlante...';
+      iframe.style.display = 'none';
+      iframe.src = '';
+
+      fetch('/start-stream', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.stream_url) {
+            iframe.src = data.stream_url;
+            iframe.style.display = 'block';
+            output.textContent = 'Avatar parlante cargado correctamente.';
+          } else {
+            output.textContent = 'Error al generar el avatar: ' + (data.error || 'Respuesta inesperada.');
+          }
+        })
+        .catch(err => {
+          output.textContent = 'Error de conexión: ' + err.message;
+        });
+    });
+  </script>
 </body>
 </html>
