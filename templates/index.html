@@ -1,14 +1,18 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>AlmostMe - Streaming D-ID</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AlmostMe</title>
+  <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <h1>AlmostMe - Streaming D-ID WebRTC</h1>
-  <button id="startBtn">Iniciar Stream</button>
-  <video id="video" autoplay playsinline controls style="width: 640px; height: 480px; border: 1px solid #ccc;"></video>
+  <h1>Clon parlante - AlmostMe</h1>
+  <div>
+    <video id="avatar" autoplay playsinline muted width="512" height="512"></video>
+  </div>
+  <button onclick="startStream()">Iniciar Clon Parlante</button>
 
-  <script src="script.js"></script>
+  <script src="/static/script.js"></script>
 </body>
 </html>
