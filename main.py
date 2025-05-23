@@ -1,14 +1,3 @@
-from flask import Flask, request, jsonify, send_from_directory
-import requests
-import os
-
-app = Flask(__name__, static_url_path='', static_folder='static')
-DID_API_KEY = os.getenv("DID_API_KEY")
-
-@app.route("/")
-def index():
-    return send_from_directory("static", "index.html")
-
 @app.route("/create_stream", methods=["POST"])
 def create_stream():
     user_text = request.json.get("text", "Hola, soy tu clon AlmostMe")
@@ -39,44 +28,19 @@ def create_stream():
     response = requests.post("https://api.d-id.com/talks/streams", headers=headers, json=body)
     data = response.json()
 
+    # Log para debug:
+    print("D-ID API Response:", data)
+
+    stream_id = data.get("id")
+    sdp_offer = data.get("offer")
+    ice_servers = data.get("ice_servers", [])
+
+    if not sdp_offer:
+        # Si no vino offer, devolver error
+        return jsonify({"error": "No SDP offer from D-ID API", "details": data}), 500
+
     return jsonify({
-        "streamId": data.get("id"),
-        "sdp": data.get("offer"),
-        "iceServers": data.get("ice_servers", [])
+        "streamId": stream_id,
+        "sdp": sdp_offer,
+        "iceServers": ice_servers
     })
-
-@app.route("/send_sdp_answer", methods=["POST"])
-def send_sdp_answer():
-    stream_id = request.json.get("streamId")
-    answer = request.json.get("answer")
-
-    headers = {
-        "Authorization": f"Bearer {DID_API_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    requests.post(
-        f"https://api.d-id.com/streams/{stream_id}/sdp",
-        headers=headers,
-        json={"answer": answer}
-    )
-
-    return jsonify({"status": "ok"})
-
-@app.route("/send_ice_candidate", methods=["POST"])
-def send_ice_candidate():
-    stream_id = request.json.get("streamId")
-    candidate = request.json.get("candidate")
-
-    headers = {
-        "Authorization": f"Bearer {DID_API_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    requests.post(
-        f"https://api.d-id.com/streams/{stream_id}/ice",
-        headers=headers,
-        json={"candidate": candidate}
-    )
-
-    return jsonify({"status": "ok"})
