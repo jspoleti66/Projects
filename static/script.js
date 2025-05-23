@@ -1,48 +1,37 @@
-const videoElement = document.getElementById("talking-video");
-
-async function startStream() {
-  const peerConnection = new RTCPeerConnection({
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
-  });
-
-  peerConnection.ontrack = (event) => {
-    videoElement.srcObject = event.streams[0];
-  };
-
-  // ICE candidates del navegador hacia el servidor
-  peerConnection.onicecandidate = async (event) => {
-    if (event.candidate && streamId) {
-      await fetch("/send_ice_candidate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          streamId,
-          candidate: event.candidate
-        }),
-      });
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AlmostMe - Clon Interactivo</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f3f3f3;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-  };
+    video {
+      width: 400px;
+      height: 400px;
+      background: black;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>AlmostMe - Clon Parlante</h1>
+  <video id="talking-video" autoplay playsinline muted></video>
+  <button onclick="startStream()">▶ Iniciar Stream</button>
 
-  const offer = await peerConnection.createOffer();
-  await peerConnection.setLocalDescription(offer);
-
-  // Crear el stream enviando el offer (no texto)
-  const response = await fetch("/create_stream", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      sdpOffer: peerConnection.localDescription
-    }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    alert("Error al iniciar el stream: " + JSON.stringify(errorData));
-    return;
-  }
-
-  const data = await response.json();
-  const { streamId, sdpAnswer, iceServers } = data;
-
-  await peerConnection.setRemoteDescription(new RTCSessionDescription(sdpAnswer));
-}
+  <!-- ✅ Ruta corregida -->
+  <script src="/static/script.js"></script>
+</body>
+</html>
