@@ -17,8 +17,7 @@ async function startStream() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          streamId,
-          candidate: event.candidate
+          text: "Hola, soy tu clon AlmostMe"
         }),
       });
     }
