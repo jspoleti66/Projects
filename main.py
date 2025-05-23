@@ -23,7 +23,7 @@ def create_stream():
     }
 
     body = {
-        "source_url": "https://i.imgur.com/YOUR_IMAGE.jpg",
+        "source_url": "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png",
         "config": {
             "stitch": True,
             "driver_expressions": {
