@@ -3,7 +3,7 @@ import requests
 import os
 
 app = Flask(__name__)
-DID_API_KEY = os.getenv("DID_API_KEY")  # clave segura
+DID_API_KEY = os.getenv("DID_API_KEY")  # Asegúrate de configurar esta variable en Render
 
 @app.route("/")
 def index():
@@ -43,14 +43,10 @@ def create_stream():
     response = requests.post("https://api.d-id.com/talks/streams", headers=headers, json=body)
     data = response.json()
 
-    stream_id = data.get("id")
-    sdp_offer = data.get("offer")
-    ice_servers = data.get("ice_servers")
-
     return jsonify({
-        "streamId": stream_id,
-        "sdp": sdp_offer,
-        "iceServers": ice_servers,
+        "streamId": data.get("id"),
+        "sdp": data.get("offer"),
+        "iceServers": data.get("ice_servers"),
     })
 
 @app.route("/send_sdp_answer", methods=["POST"])
@@ -92,4 +88,3 @@ def send_ice_candidate():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
