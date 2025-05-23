@@ -1,15 +1,13 @@
-from flask import Flask, request, jsonify, send_from_directory, render_template
+from flask import Flask, request, jsonify, send_from_directory
 import requests
 import os
 
-app = Flask(__name__)
-DID_API_KEY = os.getenv("DID_API_KEY")  # Asegúrate de configurar esta variable en Render
-
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='', static_folder='static')
+DID_API_KEY = os.getenv("DID_API_KEY")
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return send_from_directory("static", "index.html")
 
 @app.route("/create_stream", methods=["POST"])
 def create_stream():
@@ -44,7 +42,7 @@ def create_stream():
     return jsonify({
         "streamId": data.get("id"),
         "sdp": data.get("offer"),
-        "iceServers": data.get("ice_servers"),
+        "iceServers": data.get("ice_servers", [])
     })
 
 @app.route("/send_sdp_answer", methods=["POST"])
@@ -82,7 +80,3 @@ def send_ice_candidate():
     )
 
     return jsonify({"status": "ok"})
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
