@@ -15,7 +15,13 @@ async function startStream() {
   const data = await response.json();
   const { streamId, sdp, iceServers } = data;
 
-  const peerConnection = new RTCPeerConnection({ iceServers });
+  const config = {
+    iceServers: Array.isArray(iceServers) ? iceServers : []
+  };
+
+  console.log("ICE servers:", config.iceServers);
+
+  const peerConnection = new RTCPeerConnection(config);
 
   peerConnection.ontrack = (event) => {
     videoElement.srcObject = event.streams[0];
@@ -23,10 +29,13 @@ async function startStream() {
 
   peerConnection.onicecandidate = async (event) => {
     if (event.candidate) {
-      await fetch("/send_ice_candidate", {
+      await fetch(`/send_ice_candidate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ streamId, candidate: event.candidate }),
+        body: JSON.stringify({
+          streamId,
+          candidate: event.candidate
+        }),
       });
     }
   };
@@ -35,9 +44,12 @@ async function startStream() {
   const answer = await peerConnection.createAnswer();
   await peerConnection.setLocalDescription(answer);
 
-  await fetch("/send_sdp_answer", {
+  await fetch(`/send_sdp_answer`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ streamId, answer }),
+    body: JSON.stringify({
+      streamId,
+      answer: peerConnection.localDescription
+    }),
   });
 }
