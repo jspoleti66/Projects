@@ -3,7 +3,7 @@ import requests
 import os
 
 app = Flask(__name__)
-DID_API_KEY = os.getenv("DID_API_KEY", "WTJWallYSnlhWHB2WjBCbmJXRnBiQzVqYjIwOml6bTZaaEIzd29rQy1xUHBaVFlXSg==")  # o usa una variable de entorno
+DID_API_KEY = os.getenv("DID_API_KEY")  # o usa una variable de entorno
 
 @app.route("/create_stream", methods=["POST"])
 def create_stream():
