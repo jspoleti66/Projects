@@ -3,7 +3,7 @@ import requests
 
 app = Flask(__name__, static_url_path='', static_folder='static')
 
-DID_API_KEY = "tu_api_key_aqui"  # Cambia esto por tu clave real
+DID_API_KEY = "WTJWallYSnlhWHB2WjBCbmJXRnBiQzVqYjIwOml6bTZaaEIzd29rQy1xUHBaVFlXSg=="  # Cambia esto por tu clave real
 
 # Servir index.html en la raíz /
 @app.route("/")
