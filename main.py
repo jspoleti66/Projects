@@ -15,32 +15,40 @@ def create_stream():
                 "expressions": [
                     {"expression": "happy", "start_frame": 0, "intensity": 0.4}
                 ]
-            },
+            }
         },
         "script": {
             "type": "text",
             "input": user_text,
-            "provider": {"type": "microsoft", "voice_id": "es-ES-AlvaroNeural"},
+            "provider": {
+                "type": "microsoft",
+                "voice_id": "es-ES-AlvaroNeural"
+            },
             "ssml": False
         }
     }
 
-    response = requests.post("https://api.d-id.com/talks/streams", headers=headers, json=body)
-    data = response.json()
+    try:
+        response = requests.post("https://api.d-id.com/talks/streams", headers=headers, json=body)
+        response.raise_for_status()  # Para lanzar excepción si status no es 200
+        data = response.json()
 
-    # Log para debug:
-    print("D-ID API Response:", data)
+        # Log para debug
+        print("D-ID API Response:", data)
 
-    stream_id = data.get("id")
-    sdp_offer = data.get("offer")
-    ice_servers = data.get("ice_servers", [])
+        stream_id = data.get("id")
+        sdp_offer = data.get("offer")
+        ice_servers = data.get("ice_servers", [])
 
-    if not sdp_offer:
-        # Si no vino offer, devolver error
-        return jsonify({"error": "No SDP offer from D-ID API", "details": data}), 500
+        if not sdp_offer:
+            return jsonify({"error": "No SDP offer from D-ID API", "details": data}), 500
 
-    return jsonify({
-        "streamId": stream_id,
-        "sdp": sdp_offer,
-        "iceServers": ice_servers
-    })
+        return jsonify({
+            "streamId": stream_id,
+            "sdp": sdp_offer,
+            "iceServers": ice_servers
+        })
+
+    except requests.RequestException as e:
+        print(f"Error calling D-ID API: {e}")
+        return jsonify({"error": "Failed to contact D-ID API", "details": str(e)}), 500
