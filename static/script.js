@@ -1,39 +1,18 @@
 const videoElement = document.getElementById("talking-video");
 
 async function startStream() {
-  const response = await fetch("/create_stream", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text: "Hola, soy tu clon interactivo AlmostMe" }),
+  const peerConnection = new RTCPeerConnection({
+    iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
   });
-
-  if (!response.ok) {
-    alert("Error al iniciar el stream");
-    return;
-  }
-
-  const data = await response.json();
-  const { streamId, sdp, iceServers } = data;
-
-  if (!sdp) {
-    alert("No se recibió SDP válido para el stream");
-    console.error("SDP inválido recibido:", sdp);
-    return;
-  }
-
-  const config = {
-    iceServers: Array.isArray(iceServers) ? iceServers : []
-  };
-
-  const peerConnection = new RTCPeerConnection(config);
 
   peerConnection.ontrack = (event) => {
     videoElement.srcObject = event.streams[0];
   };
 
+  // ICE candidates del navegador hacia el servidor
   peerConnection.onicecandidate = async (event) => {
-    if (event.candidate) {
-      await fetch(`/send_ice_candidate`, {
+    if (event.candidate && streamId) {
+      await fetch("/send_ice_candidate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -44,19 +23,26 @@ async function startStream() {
     }
   };
 
-  // Set remote description (SDP offer from server)
-  await peerConnection.setRemoteDescription(new RTCSessionDescription(sdp));
-  // Create local SDP answer
-  const answer = await peerConnection.createAnswer();
-  await peerConnection.setLocalDescription(answer);
+  const offer = await peerConnection.createOffer();
+  await peerConnection.setLocalDescription(offer);
 
-  // Send SDP answer back to server
-  await fetch(`/send_sdp_answer`, {
+  // Crear el stream enviando el offer (no texto)
+  const response = await fetch("/create_stream", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      streamId,
-      answer: peerConnection.localDescription
+      sdpOffer: peerConnection.localDescription
     }),
   });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    alert("Error al iniciar el stream: " + JSON.stringify(errorData));
+    return;
+  }
+
+  const data = await response.json();
+  const { streamId, sdpAnswer, iceServers } = data;
+
+  await peerConnection.setRemoteDescription(new RTCSessionDescription(sdpAnswer));
 }
