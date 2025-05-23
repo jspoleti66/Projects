@@ -1,3 +1,10 @@
+from flask import Flask, request, jsonify
+import requests
+
+app = Flask(__name__)
+
+DID_API_KEY = "tu_api_key_aqui"  # Cambia esto por tu clave real
+
 @app.route("/create_stream", methods=["POST"])
 def create_stream():
     user_text = request.json.get("text", "Hola, soy tu clon AlmostMe")
@@ -30,10 +37,9 @@ def create_stream():
 
     try:
         response = requests.post("https://api.d-id.com/talks/streams", headers=headers, json=body)
-        response.raise_for_status()  # Para lanzar excepción si status no es 200
+        response.raise_for_status()
         data = response.json()
 
-        # Log para debug
         print("D-ID API Response:", data)
 
         stream_id = data.get("id")
@@ -52,3 +58,6 @@ def create_stream():
     except requests.RequestException as e:
         print(f"Error calling D-ID API: {e}")
         return jsonify({"error": "Failed to contact D-ID API", "details": str(e)}), 500
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
