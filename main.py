@@ -2,18 +2,14 @@ from flask import Flask, request, jsonify, send_from_directory
 import requests
 import os
 
-# Configurar Flask y carpeta estática
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 
-# Leer la clave D-ID desde variable de entorno
 DID_API_KEY = os.environ.get("DID_API_KEY")
 
-# Ruta principal: sirve index.html
-@app.route('/')
+@app.route("/")
 def index():
-    return send_from_directory(app.static_folder, 'index.html')
+    return send_from_directory(app.static_folder, "index.html")
 
-# Ruta para crear el stream con D-ID
 @app.route("/create_stream", methods=["POST"])
 def create_stream():
     if not DID_API_KEY:
@@ -28,6 +24,14 @@ def create_stream():
 
     body = {
         "source_url": "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png",
+        "script": {
+            "type": "text",
+            "input": user_text,
+            "provider": {
+                "type": "microsoft",
+                "voice_id": "es-ES-AlvaroNeural"
+            }
+        },
         "config": {
             "stitch": True,
             "driver_expressions": {
@@ -35,41 +39,26 @@ def create_stream():
                     {"expression": "happy", "start_frame": 0, "intensity": 0.4}
                 ]
             }
-        },
-        "script": {
-            "type": "text",
-            "input": user_text,
-            "provider": {
-                "type": "microsoft",
-                "voice_id": "es-ES-AlvaroNeural"
-            },
-            "ssml": False
         }
     }
 
     try:
-        response = requests.post("https://api.d-id.com/talks/streams", headers=headers, json=body)
+        response = requests.post(
+            "https://api.d-id.com/talks/streams",
+            headers=headers,
+            json=body
+        )
         response.raise_for_status()
         data = response.json()
 
-        stream_id = data.get("id")
-        answer_sdp = data.get("answer")
-        ice_servers = data.get("ice_servers", [])
-
-        if not answer_sdp:
-            return jsonify({"error": "No SDP answer from D-ID API", "details": data}), 500
-
         return jsonify({
-            "streamId": stream_id,
-            "sdp": {
-                "type": "answer",
-                "sdp": answer_sdp
-            },
-            "iceServers": ice_servers
+            "streamId": data.get("id"),
+            "sdp": data.get("offer"),
+            "iceServers": data.get("ice_servers", [])
         })
 
     except requests.RequestException as e:
-        print(f"Error calling D-ID API: {e}")
+        print("❌ Error al contactar la API de D-ID:", e)
         return jsonify({"error": "Error al contactar la API de D-ID", "details": str(e)}), 500
 
 if __name__ == "__main__":
