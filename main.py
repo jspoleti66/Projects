@@ -1,15 +1,25 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 import requests
 import os
 
-app = Flask(__name__)
-DID_API_KEY = os.getenv("DID_API_KEY")  # o usa una variable de entorno
+# Configurar Flask y carpeta estática
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 
+# Leer la clave D-ID desde variable de entorno
+DID_API_KEY = os.environ.get("DID_API_KEY")
+
+# Ruta principal: sirve index.html
+@app.route('/')
+def index():
+    return send_from_directory(app.static_folder, 'index.html')
+
+# Ruta para crear el stream con D-ID
 @app.route("/create_stream", methods=["POST"])
 def create_stream():
-    sdp_offer = request.json.get("sdpOffer", {}).get("sdp")
-    if not sdp_offer:
-        return jsonify({"error": "SDP offer is required"}), 400
+    if not DID_API_KEY:
+        return jsonify({"error": "Falta la clave DID_API_KEY en el entorno"}), 500
+
+    user_text = request.json.get("text", "Hola, soy tu clon AlmostMe")
 
     headers = {
         "Authorization": f"Bearer {DID_API_KEY}",
@@ -17,21 +27,23 @@ def create_stream():
     }
 
     body = {
-        "offer": {
-            "type": "offer",
-            "sdp": sdp_offer
-        },
-        "avatar_url": "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png",
+        "source_url": "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png",
         "config": {
-            "stitch": True
+            "stitch": True,
+            "driver_expressions": {
+                "expressions": [
+                    {"expression": "happy", "start_frame": 0, "intensity": 0.4}
+                ]
+            }
         },
         "script": {
             "type": "text",
-            "input": "Hola, soy tu clon interactivo AlmostMe",
+            "input": user_text,
             "provider": {
                 "type": "microsoft",
                 "voice_id": "es-ES-AlvaroNeural"
-            }
+            },
+            "ssml": False
         }
     }
 
@@ -40,41 +52,22 @@ def create_stream():
         response.raise_for_status()
         data = response.json()
 
+        stream_id = data.get("id")
+        sdp_offer = data.get("offer")
+        ice_servers = data.get("ice_servers", [])
+
+        if not sdp_offer:
+            return jsonify({"error": "No SDP offer from D-ID API", "details": data}), 500
+
         return jsonify({
-            "streamId": data.get("id"),
-            "sdpAnswer": data.get("answer"),
-            "iceServers": data.get("ice_servers", [])
+            "streamId": stream_id,
+            "sdp": sdp_offer,
+            "iceServers": ice_servers
         })
 
     except requests.RequestException as e:
-        print(f"Error al llamar D-ID: {e}")
-        return jsonify({"error": "Fallo al contactar con D-ID", "details": str(e)}), 500
-
-@app.route("/send_ice_candidate", methods=["POST"])
-def send_ice_candidate():
-    data = request.json
-    stream_id = data.get("streamId")
-    candidate = data.get("candidate")
-
-    if not stream_id or not candidate:
-        return jsonify({"error": "streamId y candidate son obligatorios"}), 400
-
-    headers = {
-        "Authorization": f"Bearer {DID_API_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    try:
-        response = requests.post(
-            f"https://api.d-id.com/talks/streams/{stream_id}/ice",
-            headers=headers,
-            json={"candidate": candidate}
-        )
-        response.raise_for_status()
-        return jsonify({"status": "ok"})
-    except requests.RequestException as e:
-        print(f"Error al enviar ICE: {e}")
-        return jsonify({"error": "Fallo al enviar ICE", "details": str(e)}), 500
+        print(f"Error calling D-ID API: {e}")
+        return jsonify({"error": "Error al contactar la API de D-ID", "details": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000)
