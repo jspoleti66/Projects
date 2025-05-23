@@ -22,8 +22,8 @@ def create_stream():
     user_text = request.json.get("text", "Hola, soy tu clon AlmostMe")
 
     headers = {
-        "Authorization": f"Bearer {DID_API_KEY}",
-        "Content-Type": "application/json"
+    "Authorization": f"Basic {DID_API_KEY}",
+    "Content-Type": "application/json"
     }
 
     body = {
