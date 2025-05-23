@@ -1,9 +1,14 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 import requests
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='', static_folder='static')
 
 DID_API_KEY = "tu_api_key_aqui"  # Cambia esto por tu clave real
+
+# Servir index.html en la raíz /
+@app.route("/")
+def index():
+    return app.send_static_file("index.html")
 
 @app.route("/create_stream", methods=["POST"])
 def create_stream():
@@ -58,6 +63,22 @@ def create_stream():
     except requests.RequestException as e:
         print(f"Error calling D-ID API: {e}")
         return jsonify({"error": "Failed to contact D-ID API", "details": str(e)}), 500
+
+# Aquí se deben implementar los endpoints para manejar ICE candidates y SDP answer
+@app.route("/send_ice_candidate", methods=["POST"])
+def send_ice_candidate():
+    data = request.json
+    # Aquí deberías enviar el candidate al servidor D-ID para ese streamId
+    # Como no hay API pública documentada, solo respondemos OK por ahora
+    print("Received ICE candidate:", data)
+    return jsonify({"status": "candidate received"}), 200
+
+@app.route("/send_sdp_answer", methods=["POST"])
+def send_sdp_answer():
+    data = request.json
+    # Aquí deberías enviar el SDP answer al servidor D-ID para ese streamId
+    print("Received SDP answer:", data)
+    return jsonify({"status": "sdp answer received"}), 200
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
