@@ -26,7 +26,7 @@ async function startStream() {
       await fetch(`https://api.d-id.com/streams/${streamId}/ice`, {
         method: "POST",
         headers: {
-          Authorization: "Bearer <YOUR_DID_API_KEY>",
+          Authorization: "Bearer WTJWallYSnlhWHB2WjBCbmJXRnBiQzVqYjIwOml6bTZaaEIzd29rQy1xUHBaVFlXSg==",
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ candidate: event.candidate }),
