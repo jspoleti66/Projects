@@ -1,17 +1,15 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, render_template
 import requests
 import os
 
 app = Flask(__name__)
 DID_API_KEY = os.getenv("DID_API_KEY")  # Asegúrate de configurar esta variable en Render
 
+app = Flask(__name__)
+
 @app.route("/")
 def index():
-    return send_from_directory(".", "index.html")
-
-@app.route("/script.js")
-def script():
-    return send_from_directory(".", "script.js")
+    return render_template("index.html")
 
 @app.route("/create_stream", methods=["POST"])
 def create_stream():
