@@ -40,6 +40,24 @@ async function startStream() {
     }
   };
 
+  const { streamId, sdp, iceServers } = data;
+  
+  if (!sdp) {
+    alert("No se recibió SDP válido para el stream");
+    console.error("SDP inválido recibido:", sdp);
+    return;
+  }
+  
+  const config = {
+    iceServers: Array.isArray(iceServers) ? iceServers : []
+  };
+  
+  const peerConnection = new RTCPeerConnection(config);
+  
+  peerConnection.ontrack = (event) => {
+    videoElement.srcObject = event.streams[0];
+  };
+ 
   await peerConnection.setRemoteDescription(sdp);
   const answer = await peerConnection.createAnswer();
   await peerConnection.setLocalDescription(answer);
