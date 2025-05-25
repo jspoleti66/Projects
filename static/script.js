@@ -1,26 +1,62 @@
-let ws;
-document.getElementById("connectBtn").onclick = async () => {
-  const res = await fetch("/start-stream");
-  const { session_id, session_token, stream_url } = await res.json();
-  ws = new WebSocket(`wss://api.d-id.com/streams/${session_id}?token=${session_token}`);
+from flask import Flask, jsonify, request, send_from_directory
+import requests
+import os
 
-  const video = document.getElementById("avatar-video");
-  const pc = new RTCPeerConnection();
-  pc.ontrack = (event) => {
-    [video.srcObject] = event.streams;
-  };
+app = Flask(__name__, static_folder=".")
 
-  const offer = await pc.createOffer();
-  await pc.setLocalDescription(offer);
+DID_API_KEY = os.getenv("DID_API_KEY")
+IMAGE_URL = "https://cdn.midjourney.com/85df418b-5cc6-47c8-80a3-729e2c6aeb27/0_2.png"  # Tu imagen personalizada
 
-  ws.onopen = () => {
-    ws.send(JSON.stringify({ type: "offer", sdp: offer.sdp }));
-  };
+@app.route("/")
+def index():
+    return send_from_directory(".", "index.html")
 
-  ws.onmessage = async (msg) => {
-    const data = JSON.parse(msg.data);
-    if (data.type === "answer") {
-      await pc.setRemoteDescription(new RTCSessionDescription(data));
+@app.route("/script.js")
+def js():
+    return send_from_directory(".", "script.js")
+
+@app.route("/api/init", methods=["POST"])
+def init_stream():
+    url = "https://api.d-id.com/talks/streams"
+    headers = {
+        "Authorization": f"Basic {DID_API_KEY}",
+        "Content-Type": "application/json",
     }
-  };
-};
+    payload = {
+        "source_url": IMAGE_URL,
+    }
+    response = requests.post(url, json=payload, headers=headers)
+    data = response.json()
+    return jsonify({
+        "streamId": data.get("id"),
+        "token": data.get("token")
+    })
+
+@app.route("/api/start", methods=["POST"])
+def start_stream():
+    content = request.json
+    stream_id = content.get("streamId")
+    text = content.get("text")
+
+    url = f"https://api.d-id.com/talks/streams/{stream_id}"
+    headers = {
+        "Authorization": f"Basic {DID_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "script": {
+            "type": "text",
+            "input": text,
+            "provider": {
+                "type": "microsoft",
+                "voice_id": "es-AR-ElenaNeural"
+            }
+        }
+    }
+
+    requests.post(url, json=payload, headers=headers)
+    return jsonify({"status": "started"})
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=True, host="0.0.0.0", port=port)
