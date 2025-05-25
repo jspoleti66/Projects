@@ -5,7 +5,7 @@ import os
 app = Flask(__name__)
 
 DID_API_KEY = os.getenv("DID_API_KEY")
-IMAGE_URL = "https://cdn.midjourney.com/85df418b-5cc6-47c8-80a3-729e2c6aeb27/0_2.png"
+IMAGE_URL = "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png"
 
 @app.route("/")
 def index():
