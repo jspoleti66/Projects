@@ -1,28 +1,43 @@
-from flask import Flask, render_template, jsonify
-import requests
 import os
+import requests
+from flask import Flask, request, jsonify, send_from_directory
 
 app = Flask(__name__)
 
-DID_API_KEY = os.getenv("DID_API_KEY")
-AVATAR_URL = "https://create.d-id.com/talks/avatars/AlmostMe.png"
+DID_TOKEN = os.getenv("DID_TOKEN")  # Obligatorio, debe estar en variables de entorno en Render
 
-@app.route("/")
+@app.route('/')
 def index():
-    return render_template("index.html")
+    return send_from_directory('.', 'index.html')
 
-@app.route("/start-stream", methods=["POST"])
-def start_stream():
+@app.route("/d-id-stream", methods=["POST"])
+def d_id_stream():
+    data = request.json
+    texto = data.get("texto", "Hola desde AlmostMe con D-ID!")
+
     headers = {
-        "Authorization": f"Basic {DID_API_KEY}",
+        "Authorization": f"Bearer {DID_TOKEN}",
         "Content-Type": "application/json"
     }
+
     payload = {
-        "source_url": AVATAR_URL,
-        "config": {"fluent": True}
+        "script": {
+            "type": "text",
+            "input": texto,
+            "provider": {"type": "microsoft", "voice_id": "es-ES-ElviraNeural"}
+        },
+        "config": {"fluent": True, "pad_audio": 0.5},
+        "image_url": "https://i.imgur.com/p0MUxcq.png"
     }
-    response = requests.post("https://api.d-id.com/talks/streams", headers=headers, json=payload)
-    return jsonify(response.json())
+
+    resp = requests.post("https://api.d-id.com/talks/streams", headers=headers, json=payload)
+
+    if resp.status_code == 200:
+        return jsonify(resp.json())
+    else:
+        return jsonify({"error": resp.text}), resp.status_code
+
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
