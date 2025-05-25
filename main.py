@@ -5,7 +5,7 @@ import os
 app = Flask(__name__)
 
 DID_API_KEY = os.getenv("DID_API_KEY")
-AVATAR_URL = "https://cdn.jsdelivr.net/gh/d-id/examples@main/images/demo.jpeg"
+AVATAR_URL = "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png"
 
 @app.route("/")
 def index():
