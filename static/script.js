@@ -1,62 +1,28 @@
-from flask import Flask, jsonify, request, send_from_directory
-import requests
-import os
+let socket;
+let streamId = null;
+let token = null;
 
-app = Flask(__name__, static_folder=".")
+document.getElementById("connectBtn").onclick = async () => {
+  const res = await fetch("/api/init", { method: "POST" });
+  const data = await res.json();
+  streamId = data.streamId;
+  token = data.token;
 
-DID_API_KEY = os.getenv("DID_API_KEY")
-IMAGE_URL = "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png"  # Tu imagen personalizada
-
-@app.route("/")
-def index():
-    return send_from_directory(".", "index.html")
-
-@app.route("/script.js")
-def js():
-    return send_from_directory(".", "script.js")
-
-@app.route("/api/init", methods=["POST"])
-def init_stream():
-    url = "https://api.d-id.com/talks/streams"
-    headers = {
-        "Authorization": f"Basic {DID_API_KEY}",
-        "Content-Type": "application/json",
+  const videoElement = document.getElementById("videoElement");
+  const wsUrl = `wss://api.d-id.com/streams/${streamId}?token=${token}`;
+  socket = new WebSocket(wsUrl);
+  socket.onmessage = (event) => {
+    if (event.data instanceof Blob) {
+      videoElement.src = URL.createObjectURL(event.data);
     }
-    payload = {
-        "source_url": IMAGE_URL,
-    }
-    response = requests.post(url, json=payload, headers=headers)
-    data = response.json()
-    return jsonify({
-        "streamId": data.get("id"),
-        "token": data.get("token")
-    })
+  };
+};
 
-@app.route("/api/start", methods=["POST"])
-def start_stream():
-    content = request.json
-    stream_id = content.get("streamId")
-    text = content.get("text")
-
-    url = f"https://api.d-id.com/talks/streams/{stream_id}"
-    headers = {
-        "Authorization": f"Basic {DID_API_KEY}",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "script": {
-            "type": "text",
-            "input": text,
-            "provider": {
-                "type": "microsoft",
-                "voice_id": "es-AR-ElenaNeural"
-            }
-        }
-    }
-
-    requests.post(url, json=payload, headers=headers)
-    return jsonify({"status": "started"})
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(debug=True, host="0.0.0.0", port=port)
+document.getElementById("startBtn").onclick = async () => {
+  const text = "Hola, soy AlmostMe, un clon parlante.";
+  await fetch("/api/start", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ streamId, text }),
+  });
+};

@@ -2,46 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AlmostMe - Streaming Demo</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 20px;
-      background-color: #f9f9f9;
-    }
-    video {
-      width: 360px;
-      border-radius: 16px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
-      margin-top: 20px;
-    }
-    button {
-      margin: 10px;
-      padding: 12px 20px;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      background-color: #007bff;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    h1 {
-      margin-bottom: 10px;
-    }
-  </style>
+  <title>AlmostMe Live</title>
 </head>
 <body>
-  <h1>🎥 AlmostMe Streaming</h1>
-  <p>Haz clic en "Conectar" y luego "Start" para comenzar el streaming en vivo con tu clon.</p>
-  <button id="connect">Conectar</button>
-  <button id="start">Start</button>
-  <br/>
-  <video id="avatar" autoplay muted playsinline></video>
+  <h1>AlmostMe - Streaming</h1>
+  <button id="connectBtn">Conectar</button>
+  <button id="startBtn">Hablar</button>
+  <video id="videoElement" autoplay playsinline></video>
 
   <script src="/static/script.js"></script>
 </body>

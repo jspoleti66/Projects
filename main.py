@@ -1,19 +1,15 @@
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, render_template
 import requests
 import os
 
-app = Flask(__name__, static_folder="static")
+app = Flask(__name__)
 
 DID_API_KEY = os.getenv("DID_API_KEY")
-IMAGE_URL = "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png"
+IMAGE_URL = "https://cdn.midjourney.com/85df418b-5cc6-47c8-80a3-729e2c6aeb27/0_2.png"
 
 @app.route("/")
 def index():
-    return send_from_directory(".", "index.html")
-
-@app.route("/static/<path:filename>")
-def static_files(filename):
-    return send_from_directory("static", filename)
+    return render_template("index.html")
 
 @app.route("/api/init", methods=["POST"])
 def init_stream():
