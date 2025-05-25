@@ -1,47 +1,30 @@
-const videoElement = document.getElementById("talking-video");
+let ws;
+let streamId;
 
-async function startStream() {
-  const peerConnection = new RTCPeerConnection({
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
-  });
+document.getElementById("connectBtn").onclick = async () => {
+  const res = await fetch("/start-stream", { method: "POST" });
+  const data = await res.json();
+  streamId = data.id;
 
-  let streamId = null;
-
-  peerConnection.ontrack = (event) => {
-    videoElement.srcObject = event.streams[0];
+  ws = new WebSocket(`wss://api.d-id.com/streams/${streamId}`);
+  ws.onopen = () => {
+    document.getElementById("startBtn").disabled = false;
+    document.getElementById("sendTextBtn").disabled = false;
+    console.log("WebSocket connected");
   };
-
-  peerConnection.onicecandidate = async (event) => {
-    if (event.candidate && streamId) {
-      await fetch("/send_ice_candidate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: "Hola, soy tu clon AlmostMe"
-        }),
-      });
-    }
+  ws.onmessage = (event) => {
+    console.log("Message:", event.data);
   };
+};
 
-  const offer = await peerConnection.createOffer();
-  await peerConnection.setLocalDescription(offer);
+document.getElementById("startBtn").onclick = () => {
+  const video = document.getElementById("videoElement");
+  video.src = `https://api.d-id.com/streams/${streamId}/video`;
+};
 
-  const response = await fetch("/create_stream", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      sdpOffer: peerConnection.localDescription
-    }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    alert("Error al iniciar el stream: " + JSON.stringify(errorData));
-    return;
+document.getElementById("sendTextBtn").onclick = () => {
+  const text = document.getElementById("textInput").value;
+  if (ws && text) {
+    ws.send(JSON.stringify({ type: "text", text }));
   }
-
-  const data = await response.json();
-  streamId = data.streamId;
-
-  await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
-}
+};
