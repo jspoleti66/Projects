@@ -1,32 +1,62 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, jsonify, request, send_from_directory
 import requests
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static")
 
 DID_API_KEY = os.getenv("DID_API_KEY")
-AVATAR_URL = "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png"
+IMAGE_URL = "https://cdn.midjourney.com/85df418b-5cc6-47c8-80a3-729e2c6aeb27/0_2.png"
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return send_from_directory(".", "index.html")
 
-@app.route("/start-stream")
-def start_stream():
+@app.route("/static/<path:filename>")
+def static_files(filename):
+    return send_from_directory("static", filename)
+
+@app.route("/api/init", methods=["POST"])
+def init_stream():
+    url = "https://api.d-id.com/talks/streams"
     headers = {
         "Authorization": f"Basic {DID_API_KEY}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
-    body = {
-        "source_url": AVATAR_URL
+    payload = {
+        "source_url": IMAGE_URL,
     }
-    response = requests.post("https://api.d-id.com/talks/streams", json=body, headers=headers)
+    response = requests.post(url, json=payload, headers=headers)
     data = response.json()
     return jsonify({
-        "session_id": data.get("id"),
-        "session_token": data.get("token"),
-        "stream_url": data.get("stream_url")
+        "streamId": data.get("id"),
+        "token": data.get("token")
     })
 
+@app.route("/api/start", methods=["POST"])
+def start_stream():
+    content = request.json
+    stream_id = content.get("streamId")
+    text = content.get("text")
+
+    url = f"https://api.d-id.com/talks/streams/{stream_id}"
+    headers = {
+        "Authorization": f"Basic {DID_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "script": {
+            "type": "text",
+            "input": text,
+            "provider": {
+                "type": "microsoft",
+                "voice_id": "es-AR-ElenaNeural"
+            }
+        }
+    }
+
+    requests.post(url, json=payload, headers=headers)
+    return jsonify({"status": "started"})
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=True, host="0.0.0.0", port=port)
