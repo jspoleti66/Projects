@@ -13,6 +13,7 @@ def index():
 
 @app.route("/api/init", methods=["POST"])
 def init_stream():
+    print("Using DID_API_KEY:", DID_API_KEY)  # <- Agregado
     url = "https://api.d-id.com/talks/streams"
     headers = {
         "Authorization": f"Basic {DID_API_KEY}",
@@ -33,6 +34,7 @@ def init_stream():
     except Exception as e:
         print("Error decoding JSON:", response.text)
         return jsonify({"error": "Failed to init stream"}), 500
+
 
 
 @app.route("/api/start", methods=["POST"])
