@@ -1,27 +1,24 @@
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request, send_from_directory
 import requests
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static")
 
-DID_API_KEY = os.getenv("DID_API_KEY")
-IMAGE_URL = "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png"
+DID_API_KEY = os.environ.get("DID_API_KEY")
+IMAGE_URL = "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return send_from_directory(".", "index.html")
 
 @app.route("/api/init", methods=["POST"])
 def init_stream():
-    print("Using DID_API_KEY:", DID_API_KEY)  # <- Agregado
     url = "https://api.d-id.com/talks/streams"
     headers = {
         "Authorization": f"Basic {DID_API_KEY}",
         "Content-Type": "application/json",
     }
-    payload = {
-        "source_url": IMAGE_URL,
-    }
+    payload = {"source_url": IMAGE_URL}
     response = requests.post(url, json=payload, headers=headers)
 
     try:
@@ -35,33 +32,6 @@ def init_stream():
         print("Error decoding JSON:", response.text)
         return jsonify({"error": "Failed to init stream"}), 500
 
-
-
-@app.route("/api/start", methods=["POST"])
-def start_stream():
-    content = request.json
-    stream_id = content.get("streamId")
-    text = content.get("text")
-
-    url = f"https://api.d-id.com/talks/streams/{stream_id}"
-    headers = {
-        "Authorization": f"Basic {DID_API_KEY}",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "script": {
-            "type": "text",
-            "input": text,
-            "provider": {
-                "type": "microsoft",
-                "voice_id": "es-AR-ElenaNeural"
-            }
-        }
-    }
-
-    requests.post(url, json=payload, headers=headers)
-    return jsonify({"status": "started"})
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(debug=True, host="0.0.0.0", port=port)
+@app.route("/static/<path:path>")
+def serve_static(path):
+    return send_from_directory("static", path)
