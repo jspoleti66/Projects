@@ -22,11 +22,18 @@ def init_stream():
         "source_url": IMAGE_URL,
     }
     response = requests.post(url, json=payload, headers=headers)
-    data = response.json()
-    return jsonify({
-        "streamId": data.get("id"),
-        "token": data.get("token")
-    })
+
+    try:
+        data = response.json()
+        print("API Response:", data)
+        return jsonify({
+            "streamId": data.get("id"),
+            "token": data.get("token")
+        })
+    except Exception as e:
+        print("Error decoding JSON:", response.text)
+        return jsonify({"error": "Failed to init stream"}), 500
+
 
 @app.route("/api/start", methods=["POST"])
 def start_stream():
