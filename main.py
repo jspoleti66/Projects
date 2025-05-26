@@ -23,10 +23,17 @@ def init_stream():
         response = requests.post(url, json=payload, headers=headers)
         data = response.json()
         print("API Response:", data)
+
         return jsonify({
             "streamId": data.get("id"),
-            "token": data.get("token")  # <- este campo es el correcto
+            "token": data.get("session_id")  # <- corregido aquí
         })
+
+        return jsonify({
+            "streamId": data.get("id"),
+            "token": data.get("session_id")  # <- corregido aquí
+        })
+
     except Exception as e:
         print("Error:", e)
         return jsonify({"error": "Failed to init stream"}), 500
