@@ -1,35 +1,43 @@
-    from flask import Flask, send_from_directory, jsonify, request
-    import requests
-    import os
+import os
+import requests
+from flask import Flask, request, jsonify, send_from_directory
 
-    app = Flask(__name__, static_folder="static", static_url_path="/static")
+app = Flask(__name__)
 
-    DID_API_KEY = os.environ.get("DID_API_KEY")
-    IMAGE_URL = "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png"
+DID_TOKEN = os.getenv("DID_TOKEN")  # Obligatorio, debe estar en variables de entorno en Render
 
-    @app.route("/")
-    def serve_index():
-        return send_from_directory(".", "index.html")  # Sirve el index.html en raíz
+@app.route('/')
+def index():
+    return send_from_directory('.', 'index.html')
 
-    @app.route("/api/init", methods=["POST"])
-    def init_stream():
-        url = "https://api.d-id.com/talks/streams"
-        headers = {
-            "Authorization": f"Basic {DID_API_KEY}",
-            "Content-Type": "application/json",
-        }
-        payload = {"source_url": IMAGE_URL}
-        try:
-            response = requests.post(url, json=payload, headers=headers)
-            data = response.json()
-            print("API Response:", data)
-            return jsonify({
-                "streamId": data.get("id"),
-                "token": data.get("token")  # <- corregido aquí
-            })
-        except Exception as e:
-            print("Error:", e)
-            return jsonify({"error": "Failed to init stream"}), 500
+@app.route("/d-id-stream", methods=["POST"])
+def d_id_stream():
+    data = request.json
+    texto = data.get("texto", "Hola desde AlmostMe con D-ID!")
 
-    if __name__ == "__main__":
-        app.run(debug=True)
+    headers = {
+        "Authorization": f"Bearer {DID_TOKEN}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "script": {
+            "type": "text",
+            "input": texto,
+            "provider": {"type": "microsoft", "voice_id": "es-ES-ElviraNeural"}
+        },
+        "config": {"fluent": True, "pad_audio": 0.5},
+        "image_url": "https://i.imgur.com/p0MUxcq.png"
+    }
+
+    resp = requests.post("https://api.d-id.com/talks/streams", headers=headers, json=payload)
+
+    if resp.status_code == 200:
+        return jsonify(resp.json())
+    else:
+        return jsonify({"error": resp.text}), resp.status_code
+
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
