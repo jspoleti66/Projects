@@ -24,14 +24,12 @@ def init_stream():
         data = response.json()
         print("API Response:", data)
 
+        # Extrae solo el valor del token (antes del primer punto y coma)
+        raw_token = data.get("session_id", "")
+        clean_token = raw_token.split(';')[0].replace("AWSALB=", "")
         return jsonify({
             "streamId": data.get("id"),
-            "token": data.get("session_id")  # <- corregido aquí
-        })
-
-        return jsonify({
-            "streamId": data.get("id"),
-            "token": data.get("session_id")  # <- corregido aquí
+            "token": clean_token
         })
 
     except Exception as e:
