@@ -5,7 +5,7 @@ import os
 app = Flask(__name__, static_folder="static")
 
 DID_API_KEY = os.environ.get("DID_API_KEY")
-IMAGE_URL = "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png
+IMAGE_URL = "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png"
 
 @app.route("/")
 def index():
