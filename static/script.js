@@ -13,8 +13,8 @@ document.getElementById("start-button").onclick = async () => {
     }
 
     console.log("Conectando a:", `wss://api.d-id.com/streams/${streamId}?token=${token}`);
-    const socket = new WebSocket(`wss://api.d-id.com/streams/${streamId}?token=${token}`);
-
+    const socket = new WebSocket(`wss://api.d-id.com/streams/${data.streamId}?token=${data.token}`);
+    
     socket.onopen = () => {
       console.log("WebSocket conectado.");
     };
