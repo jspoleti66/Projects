@@ -4,6 +4,13 @@ let streamId;
 document.getElementById("start-button").onclick = async () => {
   const res = await fetch("/start-stream", { method: "POST" });
   const data = await res.json();
+  console.log("Respuesta completa de /start-stream:", data);
+
+  if (!data.id) {
+    alert("No se recibió stream ID. Revisa si tu API Key es válida o si tu cuenta tiene acceso a streaming.");
+    return;
+  }
+
   streamId = data.id;
 
   const socketUrl = `wss://api.d-id.com/streams/${streamId}`;
