@@ -5,7 +5,7 @@ import os
 app = Flask(__name__)
 
 DID_API_KEY = os.getenv("DID_API_KEY")
-IMAGE_URL = "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png"
+AVATAR_URL = "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png"  # o el que estés usando
 
 @app.route("/")
 def index():
@@ -18,11 +18,11 @@ def start_stream():
         "Content-Type": "application/json"
     }
     payload = {
-        "source_url": IMAGE_URL,
+        "source_url": AVATAR_URL,
         "config": {"fluent": True}
     }
     response = requests.post("https://api.d-id.com/talks/streams", headers=headers, json=payload)
     return jsonify(response.json())
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))

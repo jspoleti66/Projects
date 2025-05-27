@@ -1,22 +1,74 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>AlmostMe - Clon Parlante</title>
+    <title>AlmostMe - Live Demo</title>
     <link rel="stylesheet" href="/static/style.css" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f2f2f2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem;
+      }
+
+      .video-box {
+        width: 480px;
+        height: 480px;
+        background-color: black;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+      }
+
+      video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .controls {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      input[type="text"] {
+        padding: 0.5rem;
+        flex: 1;
+        min-width: 200px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+      }
+
+      button {
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        border: none;
+        background-color: #007bff;
+        color: white;
+        cursor: pointer;
+      }
+
+      button:disabled {
+        background-color: #aaa;
+        cursor: not-allowed;
+      }
+    </style>
   </head>
   <body>
-    <div class="container">
-      <h1>🎤 AlmostMe - Clon Parlante en Vivo</h1>
-      <div class="video-box">
-        <video id="remoteVideo" autoplay muted playsinline></video>
-      </div>
-      <div class="controls">
-        <input type="text" id="textInput" placeholder="Escribe algo..." />
-        <button id="start-button">🔌 Conectar</button>
-        <button id="sendTextBtn" disabled>🗣️ Enviar</button>
-      </div>
+    <h1>🎥 AlmostMe - D-ID Live Streaming</h1>
+    <div class="video-box">
+      <video id="videoElement" autoplay muted playsinline></video>
     </div>
+    <div class="controls">
+      <button id="connectBtn">🔌 Connect</button>
+      <input type="text" id="textInput" placeholder="Type something..." />
+      <button id="sendTextBtn" disabled>🗣️ Send Text</button>
+    </div>
+
     <script src="/static/script.js"></script>
   </body>
 </html>
