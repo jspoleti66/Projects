@@ -1,11 +1,11 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, request, jsonify
 import requests
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", static_url_path="/static", template_folder="templates")
 
 DID_API_KEY = os.getenv("DID_API_KEY")
-AVATAR_URL = "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png"  # o el que estés usando
+AVATAR_URL = "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png"
 
 @app.route("/")
 def index():
@@ -22,6 +22,24 @@ def start_stream():
         "config": {"fluent": True}
     }
     response = requests.post("https://api.d-id.com/talks/streams", headers=headers, json=payload)
+    return jsonify(response.json())
+
+@app.route("/send-offer", methods=["POST"])
+def send_offer():
+    data = request.get_json()
+    stream_id = data["stream_id"]
+    offer_sdp = data["offer"]
+
+    headers = {
+        "Authorization": f"Basic {DID_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "sdp": offer_sdp
+    }
+
+    url = f"https://api.d-id.com/streams/{stream_id}/sdp"
+    response = requests.post(url, headers=headers, json=payload)
     return jsonify(response.json())
 
 if __name__ == "__main__":
