@@ -19,13 +19,16 @@ def start_stream():
     }
     payload = {
         "source_url": AVATAR_URL,
-        "config": {
-            "fluent": True,
-            "driver_expressions": {"expressions": [{"expression": "neutral", "start_frame": 0}]},
-            "stabilization_level": 1
-        }
+        "config": {"fluent": True}
     }
+
+    print("🟡 Enviando solicitud a D-ID (start-stream)")
+    print("🔹 Headers:", headers)
+    print("🔹 Payload:", payload)
+
     response = requests.post("https://api.d-id.com/talks/streams", headers=headers, json=payload)
+    print("🟢 Respuesta de D-ID (start-stream):", response.status_code, response.text)
+
     return jsonify(response.json())
 
 @app.route("/send-offer", methods=["POST"])
@@ -43,8 +46,17 @@ def send_offer():
     }
 
     url = f"https://api.d-id.com/streams/{stream_id}/sdp"
+
+    print("🟡 Enviando oferta SDP")
+    print("🔹 Stream ID:", stream_id)
+    print("🔹 Headers:", headers)
+    print("🔹 Payload:", payload)
+
     response = requests.post(url, headers=headers, json=payload)
+    print("🟢 Respuesta de D-ID (send-offer):", response.status_code, response.text)
+
     return jsonify(response.json())
 
 if __name__ == "__main__":
+    print("🚀 Servidor iniciado en modo debug")
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
