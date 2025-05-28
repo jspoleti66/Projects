@@ -14,8 +14,8 @@ def index():
 @app.route("/start-stream", methods=["POST"])
 def start_stream():
     headers = {
-        "Authorization": f"Basic {DID_API_KEY}",
-        "Content-Type": "application/json"
+    "Authorization": f"Bearer {DID_API_KEY}",
+    "Content-Type": "application/json"
     }
     payload = {
         "source_url": AVATAR_URL,
@@ -31,9 +31,10 @@ def send_offer():
     offer_sdp = data["offer"]
 
     headers = {
-        "Authorization": f"Basic {DID_API_KEY}",
+        "Authorization": f"Bearer {DID_API_KEY}",
         "Content-Type": "application/json"
     }
+
     payload = {
         "sdp": offer_sdp
     }
