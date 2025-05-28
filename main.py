@@ -1,13 +1,10 @@
 from flask import Flask, render_template, request, jsonify
 import requests
 import os
-import base64
 
 app = Flask(__name__, static_folder="static", static_url_path="/static", template_folder="templates")
 
-# Define tus credenciales explícitamente o usa variables de entorno
-email = os.getenv("DID_EMAIL") or "cecarrizog@gmail.com"
-api_key = os.getenv("DID_API_KEY") or "Y2VjYXJyaXpvZ0BnbWFpbC5jb20:AJQHqsCbFTHgXkfVfP8zd"
+DID_API_KEY = os.getenv("DID_API_KEY")
 AVATAR_URL = "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png"
 
 @app.route("/")
@@ -16,8 +13,8 @@ def index():
 
 @app.route("/start-stream", methods=["POST"])
 def start_stream():
-    headers_start = {
-        'Authorization': 'Basic ' + base64.b64encode(f'{email}:{api_key}'.encode()).decode(),
+    headers = {
+        'Authorization': f'Bearer {DID_API_KEY}',
         'Content-Type': 'application/json'
     }
 
@@ -27,10 +24,10 @@ def start_stream():
     }
 
     print("🟡 Enviando solicitud a D-ID (start-stream)")
-    print("🔹 Headers:", headers_start)
+    print("🔹 Headers:", headers)
     print("🔹 Payload:", payload)
 
-    response = requests.post("https://api.d-id.com/talks/streams", headers=headers_start, json=payload)
+    response = requests.post("https://api.d-id.com/talks/streams", headers=headers, json=payload)
     print("🟢 Respuesta de D-ID (start-stream):", response.status_code, response.text)
 
     return jsonify(response.json()), response.status_code
