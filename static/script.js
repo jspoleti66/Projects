@@ -1,44 +1,74 @@
-const video = document.getElementById("videoElement");
+let ws;
+let streamId;
+let pc;
 
 document.getElementById("connectBtn").onclick = async () => {
-  const res = await fetch("/start-stream", { method: "POST" });
-  const data = await res.json();
-  console.log("Respuesta completa de /start-stream:", data);
+  try {
+    const res = await fetch("/start-stream", { method: "POST" });
+    const data = await res.json();
+    console.log("✅ Respuesta de /start-stream:", data);
 
-  const streamId = data.id;
-  const offer = data.offer;
-  const iceServers = data.ice_servers;
-
-  const pc = new RTCPeerConnection({ iceServers });
-  pc.ontrack = (event) => {
-    video.srcObject = event.streams[0];
-  };
-
-  await pc.setRemoteDescription(offer);
-  const answer = await pc.createAnswer();
-  await pc.setLocalDescription(answer);
-
-  await fetch(`https://api.d-id.com/streams/${streamId}/sdp`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ answer }),
-  });
-
-  const ws = new WebSocket(`wss://api.d-id.com/streams/${streamId}`);
-  ws.onopen = () => {
-    document.getElementById("sendTextBtn").disabled = false;
-    console.log("WebSocket conectado");
-  };
-  ws.onmessage = (event) => {
-    console.log("Mensaje:", event.data);
-  };
-
-  document.getElementById("sendTextBtn").onclick = () => {
-    const text = document.getElementById("textInput").value;
-    if (text) {
-      ws.send(JSON.stringify({ type: "text", text }));
+    if (!data.id || !data.ice_servers || !data.offer) {
+      console.error("❌ Datos incompletos o error:", data);
+      return;
     }
-  };
+
+    streamId = data.id;
+
+    pc = new RTCPeerConnection({
+      iceServers: data.ice_servers,
+    });
+
+    const video = document.getElementById("videoElement");
+    pc.ontrack = (event) => {
+      if (video.srcObject !== event.streams[0]) {
+        console.log("🎥 Recibiendo video track");
+        video.srcObject = event.streams[0];
+      }
+    };
+
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    console.log("📡 Enviando offer:", offer.sdp);
+
+    const offerRes = await fetch("/send-offer", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        stream_id: streamId,
+        offer: offer.sdp
+      })
+    });
+
+    const answerData = await offerRes.json();
+    console.log("📨 Respuesta SDP:", answerData);
+
+    await pc.setRemoteDescription({
+      type: "answer",
+      sdp: answerData.sdp
+    });
+
+    document.getElementById("sendTextBtn").disabled = false;
+
+    ws = new WebSocket(`wss://api.d-id.com/streams/${streamId}`);
+    ws.onopen = () => {
+      console.log("🔗 WebSocket conectado");
+    };
+    ws.onmessage = (event) => {
+      console.log("📥 Mensaje WebSocket:", event.data);
+    };
+
+  } catch (err) {
+    console.error("❗ Error al iniciar conexión:", err);
+  }
+};
+
+document.getElementById("sendTextBtn").onclick = () => {
+  const text = document.getElementById("textInput").value;
+  if (ws && text) {
+    console.log("✉️ Enviando texto:", text);
+    ws.send(JSON.stringify({ type: "text", text }));
+  }
 };
