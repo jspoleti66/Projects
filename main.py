@@ -13,10 +13,11 @@ def index():
 
 @app.route("/start-stream", methods=["POST"])
 def start_stream():
-    headers = {
-        "Authorization": f"Basic {DID_API_KEY}",
-        "Content-Type": "application/json"
+    headers_start = {
+        'Authorization': 'Basic ' + base64.b64encode(f'{email}:{api_key}'.encode()).decode(),
+        'Content-Type': 'application/json'
     }
+
     payload = {
         "source_url": AVATAR_URL,
         "config": {"fluent": True}
@@ -37,10 +38,11 @@ def send_offer():
     stream_id = data["stream_id"]
     offer_sdp = data["offer"]
 
-    headers = {
-        "Authorization": f"Basic {DID_API_KEY}",
-        "Content-Type": "application/json"
+    headers_offer = {
+        'Authorization': f'Bearer {api_key}',
+        'Content-Type': 'application/json'
     }
+
     payload = {
         "sdp": offer_sdp
     }
