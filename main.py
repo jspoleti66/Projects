@@ -14,12 +14,16 @@ def index():
 @app.route("/start-stream", methods=["POST"])
 def start_stream():
     headers = {
-    "Authorization": f"Bearer {DID_API_KEY}",
-    "Content-Type": "application/json"
+        "Authorization": f"Bearer {DID_API_KEY}",
+        "Content-Type": "application/json"
     }
     payload = {
         "source_url": AVATAR_URL,
-        "config": {"fluent": True}
+        "config": {
+            "fluent": True,
+            "driver_expressions": {"expressions": [{"expression": "neutral", "start_frame": 0}]},
+            "stabilization_level": 1
+        }
     }
     response = requests.post("https://api.d-id.com/talks/streams", headers=headers, json=payload)
     return jsonify(response.json())
@@ -34,7 +38,6 @@ def send_offer():
         "Authorization": f"Bearer {DID_API_KEY}",
         "Content-Type": "application/json"
     }
-
     payload = {
         "sdp": offer_sdp
     }
