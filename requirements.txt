@@ -1,4 +1,5 @@
 Flask
-opencv-python
-moviepy
-mediapipe
+opencv-python-headless==4.5.5.62
+moviepy==1.0.3
+mediapipe==0.10.9
+imageio[ffmpeg]  # <- necesario para exportar video

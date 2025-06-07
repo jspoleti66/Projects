@@ -1,36 +1,39 @@
-import cv2
-import numpy as np
-import mediapipe as mp
-import moviepy.editor as mpy
+from flask import Flask, render_template_string, request, send_file
+from talkingface import TalkingFace
+import os
 
-def generate_animation_from_text(image_path, text, output_path):
-    # Carga imagen base
-    img = cv2.imread(image_path)
-    h, w, _ = img.shape
+app = Flask(__name__)
+avatar_path = 'static/avatar.png'
+outputs_path = 'static/outputs'
+os.makedirs(outputs_path, exist_ok=True)
 
-    mp_face_mesh = mp.solutions.face_mesh
-    face_mesh = mp_face_mesh.FaceMesh(static_image_mode=True)
+talker = TalkingFace(avatar_path)
 
-    # Detectar landmarks faciales
-    results = face_mesh.process(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-    if not results.multi_face_landmarks:
-        raise Exception("No se detectaron rostros en la imagen")
+HTML_PAGE = '''
+<!doctype html>
+<title>AlmostMe - Demo</title>
+<h2>Animación básica del clon</h2>
+<form method=post>
+  <input name=text placeholder="Escribí un mensaje..." size=40>
+  <input type=submit value="Generar">
+</form>
+{% if filename %}
+  <h3>Resultado:</h3>
+  <video width="320" height="320" controls autoplay loop>
+    <source src="{{ url_for('static', filename='outputs/' + filename) }}" type="video/mp4">
+  </video>
+{% endif %}
+'''
 
-    # Animación simple: genera cuadros modificando la boca y cabeza
-    frames = []
-    for i in range(15):
-        frame = img.copy()
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    filename = None
+    if request.method == 'POST':
+        text = request.form['text']
+        filename = f"out.mp4"
+        output_path = os.path.join(outputs_path, filename)
+        talker.animate(text, output_path)
+    return render_template_string(HTML_PAGE, filename=filename)
 
-        # Simula movimiento de cabeza (rotación leve)
-        angle = np.sin(i / 2) * 2
-        M = cv2.getRotationMatrix2D((w//2, h//2), angle, 1)
-        frame = cv2.warpAffine(frame, M, (w, h))
-
-        # Simula apertura de boca
-        cv2.ellipse(frame, (w//2, int(h*0.65)), (20, 10 + i % 5), 0, 0, 360, (0, 0, 0), -1)
-
-        frames.append(frame)
-
-    # Guardar como video
-    clip = mpy.ImageSequenceClip([cv2.cvtColor(f, cv2.COLOR_BGR2RGB) for f in frames], fps=10)
-    clip.write_videofile(output_path, codec="libx264")
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=10000)
