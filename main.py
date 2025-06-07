@@ -1,64 +1,36 @@
-from flask import Flask, render_template, request, jsonify
-import requests
-import os
+import cv2
+import numpy as np
+import mediapipe as mp
+import moviepy.editor as mpy
 
-app = Flask(__name__, static_folder="static", static_url_path="/static", template_folder="templates")
+def generate_animation_from_text(image_path, text, output_path):
+    # Carga imagen base
+    img = cv2.imread(image_path)
+    h, w, _ = img.shape
 
-DID_API_KEY = os.getenv("DID_API_KEY")
-AVATAR_URL = "https://raw.githubusercontent.com/jspoleti66/Projects/main/static/AlmostMe.png"
+    mp_face_mesh = mp.solutions.face_mesh
+    face_mesh = mp_face_mesh.FaceMesh(static_image_mode=True)
 
-@app.route("/")
-def index():
-    return render_template("index.html")
+    # Detectar landmarks faciales
+    results = face_mesh.process(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    if not results.multi_face_landmarks:
+        raise Exception("No se detectaron rostros en la imagen")
 
-@app.route("/start-stream", methods=["POST"])
-def start_stream():
-    headers = {
-        'Authorization': f'Bearer {DID_API_KEY}',
-        'Content-Type': 'application/json'
-    }
+    # Animación simple: genera cuadros modificando la boca y cabeza
+    frames = []
+    for i in range(15):
+        frame = img.copy()
 
-    payload = {
-        "source_url": AVATAR_URL,
-        "config": {"fluent": True}
-    }
+        # Simula movimiento de cabeza (rotación leve)
+        angle = np.sin(i / 2) * 2
+        M = cv2.getRotationMatrix2D((w//2, h//2), angle, 1)
+        frame = cv2.warpAffine(frame, M, (w, h))
 
-    print("🟡 Enviando solicitud a D-ID (start-stream)")
-    print("🔹 Headers:", headers)
-    print("🔹 Payload:", payload)
+        # Simula apertura de boca
+        cv2.ellipse(frame, (w//2, int(h*0.65)), (20, 10 + i % 5), 0, 0, 360, (0, 0, 0), -1)
 
-    response = requests.post("https://api.d-id.com/talks/streams", headers=headers, json=payload)
-    print("🟢 Respuesta de D-ID (start-stream):", response.status_code, response.text)
+        frames.append(frame)
 
-    return jsonify(response.json()), response.status_code
-
-@app.route("/send-offer", methods=["POST"])
-def send_offer():
-    data = request.get_json()
-    stream_id = data.get("stream_id")
-    offer_sdp = data.get("offer")
-
-    headers_offer = {
-        'Authorization': 'Basic ' + base64.b64encode(f'{email}:{api_key}'.encode()).decode(),
-        'Content-Type': 'application/json'
-    }
-
-    payload = {
-        "sdp": offer_sdp
-    }
-
-    url = f"https://api.d-id.com/streams/{stream_id}/sdp"
-
-    print("🟡 Enviando oferta SDP")
-    print("🔹 Stream ID:", stream_id)
-    print("🔹 Headers:", headers_offer)
-    print("🔹 Payload:", payload)
-
-    response = requests.post(url, headers=headers_offer, json=payload)
-    print("🟢 Respuesta de D-ID (send-offer):", response.status_code, response.text)
-
-    return jsonify(response.json()), response.status_code
-
-if __name__ == "__main__":
-    print("🚀 Servidor iniciado en modo debug")
-    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+    # Guardar como video
+    clip = mpy.ImageSequenceClip([cv2.cvtColor(f, cv2.COLOR_BGR2RGB) for f in frames], fps=10)
+    clip.write_videofile(output_path, codec="libx264")
