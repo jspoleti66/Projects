@@ -1,0 +1,19 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AlmostMe - SadTalker Text Animation</title>
+</head>
+<body>
+    <h1>Animación en Tiempo Real (Texto → Movimiento)</h1>
+    <form method="POST">
+        <input type="text" name="user_text" placeholder="Escribe algo..." required>
+        <button type="submit">Animar</button>
+    </form>
+    {% if result_img %}
+        <h2>Resultado:</h2>
+        <img src="{{ url_for('static', filename=result_img) }}" alt="Animación">
+    {% endif %}
+</body>
+</html>

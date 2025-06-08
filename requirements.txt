@@ -1,6 +1,3 @@
-Flask
-opencv-python-headless==4.5.5.62
-moviepy==1.0.3
-mediapipe==0.10.9
-imageio[ffmpeg]
 
+Flask==2.3.2
+Pillow==9.5.0
