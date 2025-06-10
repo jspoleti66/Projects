@@ -2,7 +2,7 @@
 flask
 
 # Deep Learning
-torch==2.0.0
+torch==2.0.1
 torchaudio==2.0.1
 
 # Utilidades
