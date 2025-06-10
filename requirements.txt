@@ -1,1 +1,28 @@
+# App
 flask
+
+# Deep Learning
+torch==2.0.1
+torchaudio==2.0.1
+
+# Utilidades
+numpy
+scipy
+opencv-python
+Pillow
+matplotlib
+ffmpeg-python
+gfpgan
+face-alignment
+
+# Modelos y visión por computadora
+dlib
+imageio
+imageio-ffmpeg
+yacs
+librosa
+audioread
+tqdm
+numba
+einops
+scikit-image
