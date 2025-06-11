@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 import os
 import subprocess
 import uuid
@@ -26,13 +26,14 @@ def animate():
         "--source_image", IMAGE_PATH,
         "--result_dir", output_dir,
         "--enhancer", "gfpgan",
-        "--preprocess", "retina",   # ✅ cambio clave aquí
+        "--preprocess", "retina",
         "--still",
         "--batch_size", "1",
         "--pose_style", "0"
     ]
 
     try:
+        print("Ejecutando comando:", " ".join(command))
         result = subprocess.run(
             command,
             cwd="sadtalker",
@@ -40,14 +41,14 @@ def animate():
             capture_output=True,
             text=True
         )
+        print("STDOUT:", result.stdout)
         return jsonify({"status": "ok", "session": session_id})
     except subprocess.CalledProcessError as e:
+        print("ERROR:", e.stderr)
         return jsonify({
             "status": "error",
             "details": e.stderr or str(e)
         })
-    
-from flask import send_from_directory
 
 @app.route('/live_frames/<session>/<filename>')
 def serve_frame(session, filename):

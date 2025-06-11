@@ -5,6 +5,7 @@ async function startAnimation() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text })
   });
+
   const data = await response.json();
 
   if (data.status === "ok") {
@@ -21,7 +22,7 @@ async function startAnimation() {
     setInterval(() => {
       img.src = `/live_frames/${session}/${String(index).padStart(5, "0")}.jpg`;
       index = (index + 1) % maxFrames;
-    }, 100);
+    }, 100); // 10 fps
   } else {
     alert("Error: " + data.details);
   }
