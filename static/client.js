@@ -1,4 +1,4 @@
-async function animate() {
+async function startAnimation() {
   const text = document.getElementById("text").value;
   const response = await fetch("/animate", {
     method: "POST",
@@ -13,7 +13,7 @@ async function animate() {
     container.innerHTML = "";
 
     let index = 0;
-    const maxFrames = 50; // ajustá según cuántos frames genere SadTalker
+    const maxFrames = 50;
     const img = document.createElement("img");
     img.width = 512;
     container.appendChild(img);
@@ -21,7 +21,7 @@ async function animate() {
     setInterval(() => {
       img.src = `/live_frames/${session}/${String(index).padStart(5, "0")}.jpg`;
       index = (index + 1) % maxFrames;
-    }, 100); // 10 fps
+    }, 100);
   } else {
     alert("Error: " + data.details);
   }
