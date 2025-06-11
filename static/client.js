@@ -20,7 +20,7 @@ async function startAnimation() {
     container.appendChild(img);
 
     setInterval(() => {
-      img.src = `/live_frames/${session}/${String(index).padStart(5, "0")}.jpg`;
+      img.src = `/live_frames/${session}/${String(index).padStart(5, "0")}.png`;
       index = (index + 1) % maxFrames;
     }, 100); // 10 fps
   } else {
