@@ -26,7 +26,7 @@ def animate():
         "--source_image", IMAGE_PATH,
         "--result_dir", output_dir,
         "--enhancer", "gfpgan",
-        "--preprocess", "full",
+        "--preprocess", "retina",   # ✅ cambio clave aquí
         "--still",
         "--batch_size", "1",
         "--pose_style", "0"
@@ -46,6 +46,12 @@ def animate():
             "status": "error",
             "details": e.stderr or str(e)
         })
+    
+from flask import send_from_directory
+
+@app.route('/live_frames/<session>/<filename>')
+def serve_frame(session, filename):
+    return send_from_directory(os.path.join(FRAME_OUTPUT_DIR, session), filename)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
