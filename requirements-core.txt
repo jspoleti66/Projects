@@ -21,6 +21,8 @@ kornia
 
 numpy<2
 pydub
+edge-tts
+
 
 
 
