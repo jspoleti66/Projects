@@ -17,4 +17,4 @@ scikit-image
 gfpgan
 face-alignment
 safetensors
-
+kornia
