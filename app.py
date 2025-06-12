@@ -26,7 +26,7 @@ def animate():
         "--source_image", IMAGE_PATH,
         "--result_dir", output_dir,
         "--enhancer", "gfpgan",
-        "--preprocess", "retina",
+        "--preprocess", "full",  # ← valor corregido aquí
         "--still",
         "--batch_size", "1",
         "--pose_style", "0"
