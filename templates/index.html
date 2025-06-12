@@ -2,21 +2,20 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>AlmostMe - Demo</title>
-  <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+  <title>AlmostMe - Demo SadTalker</title>
+  <script src="/static/client.js" defer></script>
   <style>
-    body { font-family: sans-serif; padding: 2em; }
-    #animation { max-width: 512px; margin-top: 20px; }
+    body { font-family: sans-serif; text-align: center; margin-top: 2rem; }
+    img { width: 256px; height: auto; border-radius: 8px; }
+    input, button { padding: 0.5rem 1rem; font-size: 1rem; margin: 1rem; }
   </style>
 </head>
 <body>
-  <h1>AlmostMe</h1>
-  <input type="text" id="text" placeholder="Escribí algo..." value="Hola, soy tu clon" />
-  <button onclick="startAnimation()">Animar</button>
-
-  <div id="animation"></div>
-
-  <!-- Evita caché con ?v=1 -->
-  <script src="/static/client.js?v=1"></script>
+  <h1>Clon Interactivo (texto → animación)</h1>
+  <input type="text" id="inputText" placeholder="Escribí algo para animar" />
+  <button id="animateBtn">Animar</button>
+  <div>
+    <img id="avatarFrame" src="" alt="Animación en vivo" />
+  </div>
 </body>
 </html>

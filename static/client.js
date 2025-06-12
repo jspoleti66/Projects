@@ -1,30 +1,41 @@
-async function startAnimation() {
-  const text = document.getElementById("text").value;
-  const response = await fetch("/animate", {
+document.getElementById("animateBtn").addEventListener("click", async () => {
+  const text = document.getElementById("inputText").value.trim();
+  if (!text) return alert("Escribí algo para animar.");
+
+  const avatar = document.getElementById("avatarFrame");
+  avatar.src = "";
+
+  const res = await fetch("/animate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text })
+    body: JSON.stringify({ text }),
   });
 
-  const data = await response.json();
-
-  if (data.status === "ok") {
-    const session = data.session;
-    const container = document.getElementById("animation");
-    container.innerHTML = "";
-
-    let index = 0;
-    const maxFrames = 50;
-    const img = document.createElement("img");
-    img.width = 512;
-    container.appendChild(img);
-
-    setInterval(() => {
-      img.src = `/live_frames/${session}/${String(index).padStart(5, "0")}.jpg`;
-      index = (index + 1) % maxFrames;
-    }, 100);
-  } else {
-    console.error("Error del servidor:", data.details);
-    alert("Error: Revisá la consola del navegador (F12 > Console).");
+  const data = await res.json();
+  if (data.status !== "ok") {
+    alert("Error al animar: " + data.details);
+    return;
   }
-}
+
+  const session = data.session;
+  let frame = 0;
+  const totalFrames = 64; // SadTalker genera típicamente hasta ~64 frames
+
+  const updateFrame = () => {
+    const frameName = `${frame}.jpg`;
+    const frameUrl = `/live_frames/${session}/${frameName}?t=${Date.now()}`;
+    fetch(frameUrl)
+      .then((r) => {
+        if (r.ok) {
+          avatar.src = frameUrl;
+          frame++;
+          setTimeout(updateFrame, 1000 / 15); // 15 FPS
+        } else {
+          // Terminó la animación
+        }
+      })
+      .catch(() => {});
+  };
+
+  updateFrame();
+});
