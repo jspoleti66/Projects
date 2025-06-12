@@ -5,17 +5,51 @@
   <title>AlmostMe - Demo SadTalker</title>
   <script src="/static/client.js" defer></script>
   <style>
-    body { font-family: sans-serif; text-align: center; margin-top: 2rem; }
-    img { width: 256px; height: auto; border-radius: 8px; }
-    input, button { padding: 0.5rem 1rem; font-size: 1rem; margin: 1rem; }
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin-top: 2rem;
+    }
+    img {
+      width: 256px;
+      height: auto;
+      border-radius: 8px;
+    }
+    input, button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      margin: 1rem;
+    }
+    #statusText {
+      font-weight: bold;
+      color: #555;
+      margin-bottom: 1rem;
+    }
+    #spinner {
+      display: none;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #555;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+      display: inline-block;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
-  <h1>Clon Interactivo (texto → animación)</h1>
-  <input type="text" id="inputText" placeholder="Escribí algo para animar" />
-  <button id="animateBtn">Animar</button>
+  <h1>🎭 Clon Interactivo (Texto → Animación)</h1>
+  <input type="text" id="inputText" placeholder="Escribí algo..." />
+  <button id="animateBtn">▶️ Animar</button>
+  <div id="statusText">Esperando entrada...</div>
+  <div id="spinner"></div>
   <div>
-    <img id="avatarFrame" src="" alt="Animación en vivo" />
+    <img id="avatarFrame" src="" alt="Animación generada" />
   </div>
 </body>
 </html>

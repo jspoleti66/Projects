@@ -1,41 +1,62 @@
-document.getElementById("animateBtn").addEventListener("click", async () => {
-  const text = document.getElementById("inputText").value.trim();
-  if (!text) return alert("Escribí algo para animar.");
-
+document.addEventListener("DOMContentLoaded", () => {
+  const input = document.getElementById("inputText");
+  const button = document.getElementById("animateBtn");
   const avatar = document.getElementById("avatarFrame");
-  avatar.src = "";
+  const status = document.getElementById("statusText");
+  const spinner = document.getElementById("spinner");
 
-  const res = await fetch("/animate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
-  });
+  button.addEventListener("click", async () => {
+    const text = input.value.trim();
+    if (!text) return alert("Escribí algo para animar.");
 
-  const data = await res.json();
-  if (data.status !== "ok") {
-    alert("Error al animar: " + data.details);
-    return;
-  }
+    avatar.src = "";
+    status.textContent = "Generando animación...";
+    button.disabled = true;
+    spinner.style.display = "inline-block";
 
-  const session = data.session;
-  let frame = 0;
-  const totalFrames = 64; // SadTalker genera típicamente hasta ~64 frames
+    try {
+      const res = await fetch("/animate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
 
-  const updateFrame = () => {
-    const frameName = `${frame}.jpg`;
-    const frameUrl = `/live_frames/${session}/${frameName}?t=${Date.now()}`;
-    fetch(frameUrl)
-      .then((r) => {
-        if (r.ok) {
-          avatar.src = frameUrl;
-          frame++;
-          setTimeout(updateFrame, 1000 / 15); // 15 FPS
-        } else {
-          // Terminó la animación
+      const data = await res.json();
+      if (data.status !== "ok") {
+        status.textContent = "Error: " + data.details;
+        button.disabled = false;
+        spinner.style.display = "none";
+        return;
+      }
+
+      const session = data.session;
+      let frame = 0;
+
+      const updateFrame = async () => {
+        const frameUrl = `/live_frames/${session}/${frame}.jpg?t=${Date.now()}`;
+        try {
+          const r = await fetch(frameUrl);
+          if (r.ok) {
+            avatar.src = frameUrl;
+            frame++;
+            setTimeout(updateFrame, 1000 / 15); // 15 fps
+          } else {
+            status.textContent = "✅ Animación completa.";
+            button.disabled = false;
+            spinner.style.display = "none";
+          }
+        } catch {
+          status.textContent = "❌ Error cargando frame.";
+          button.disabled = false;
+          spinner.style.display = "none";
         }
-      })
-      .catch(() => {});
-  };
+      };
 
-  updateFrame();
+      updateFrame();
+    } catch (err) {
+      status.textContent = "❌ Error inesperado: " + err.message;
+      button.disabled = false;
+      spinner.style.display = "none";
+    }
+  });
 });
