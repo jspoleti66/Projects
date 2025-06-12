@@ -22,8 +22,9 @@ async function startAnimation() {
     setInterval(() => {
       img.src = `/live_frames/${session}/${String(index).padStart(5, "0")}.jpg`;
       index = (index + 1) % maxFrames;
-    }, 100); // 10 fps
+    }, 100);
   } else {
-    alert("Error: " + data.details);
+    console.error("Error del servidor:", data.details);
+    alert("Error: Revisá la consola del navegador (F12 > Console).");
   }
 }
