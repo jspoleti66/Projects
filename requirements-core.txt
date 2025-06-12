@@ -20,5 +20,7 @@ safetensors
 kornia
 
 numpy<2
+pydub
+
 
 
