@@ -1,62 +1,57 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.getElementById("animateBtn").addEventListener("click", async () => {
   const input = document.getElementById("inputText");
-  const button = document.getElementById("animateBtn");
+  const text = input.value.trim();
   const avatar = document.getElementById("avatarFrame");
-  const status = document.getElementById("statusText");
-  const spinner = document.getElementById("spinner");
 
-  button.addEventListener("click", async () => {
-    const text = input.value.trim();
-    if (!text) return alert("Escribí algo para animar.");
+  if (!text) {
+    alert("Escribí algo para animar.");
+    return;
+  }
 
-    avatar.src = "";
-    status.textContent = "Generando animación...";
-    button.disabled = true;
-    spinner.style.display = "inline-block";
+  // Limpiar estado previo
+  input.disabled = true;
+  avatar.src = "";
+  avatar.alt = "Procesando animación...";
+  document.getElementById("animateBtn").disabled = true;
 
-    try {
-      const res = await fetch("/animate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
+  try {
+    const res = await fetch("/animate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
 
-      const data = await res.json();
-      if (data.status !== "ok") {
-        status.textContent = "Error: " + data.details;
-        button.disabled = false;
-        spinner.style.display = "none";
-        return;
-      }
+    const data = await res.json();
+    if (data.status !== "ok") throw new Error(data.details);
 
-      const session = data.session;
-      let frame = 0;
+    const session = data.session;
+    let frame = 0;
+    const fps = 15;
+    const maxFrames = 100; // Corte de seguridad
 
-      const updateFrame = async () => {
-        const frameUrl = `/live_frames/${session}/${frame}.jpg?t=${Date.now()}`;
-        try {
-          const r = await fetch(frameUrl);
-          if (r.ok) {
-            avatar.src = frameUrl;
-            frame++;
-            setTimeout(updateFrame, 1000 / 15); // 15 fps
-          } else {
-            status.textContent = "✅ Animación completa.";
-            button.disabled = false;
-            spinner.style.display = "none";
-          }
-        } catch {
-          status.textContent = "❌ Error cargando frame.";
-          button.disabled = false;
-          spinner.style.display = "none";
+    const updateFrame = async () => {
+      const frameUrl = `/live_frames/${session}/${frame}.jpg?t=${Date.now()}`;
+      try {
+        const r = await fetch(frameUrl);
+        if (!r.ok || frame >= maxFrames) {
+          console.log("🎬 Animación completa");
+          input.disabled = false;
+          document.getElementById("animateBtn").disabled = false;
+          return;
         }
-      };
+        avatar.src = frameUrl;
+        frame++;
+        setTimeout(updateFrame, 1000 / fps);
+      } catch (e) {
+        console.warn("Error cargando frame:", e);
+      }
+    };
 
-      updateFrame();
-    } catch (err) {
-      status.textContent = "❌ Error inesperado: " + err.message;
-      button.disabled = false;
-      spinner.style.display = "none";
-    }
-  });
+    updateFrame();
+  } catch (err) {
+    console.error("❌ Error al animar:", err);
+    alert("Error al animar: " + err.message);
+    input.disabled = false;
+    document.getElementById("animateBtn").disabled = false;
+  }
 });
